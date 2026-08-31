@@ -18,20 +18,28 @@
    토큰
    ═════════════════════════════════════════════ */
 :root{
-  --ground:#e9edf1;
+  --ground:#e6ebef;
   --surface:#ffffff;
-  --surface-2:#f4f7f9;
-  --ink:#131a22;
-  --ink-2:#4a5663;
-  --ink-3:#78848f;
-  --line:#d5dbe1;
-  --line-soft:#e7ebef;
-  --accent:#bf421c;
+  --surface-2:#f1f5f8;
+  --surface-3:#e5ecf1;
+  --ink:#0e1620;
+  --ink-2:#485764;
+  --ink-3:#7a8894;
+  --line:#cfd8df;
+  --line-soft:#e3e9ee;
+  --accent:#c2451d;
+  --accent-2:#9a3616;
   --accent-ink:#ffffff;
-  --accent-soft:#f8e6df;
-  --pitch:#14653f;
-  --shadow:0 1px 2px rgba(19,26,34,.05), 0 10px 28px rgba(19,26,34,.07);
-  --shadow-lg:0 2px 6px rgba(19,26,34,.06), 0 22px 50px rgba(19,26,34,.11);
+  --accent-soft:#fbe7e0;
+  --pitch:#0f6b46;
+  --chalk:rgba(15,107,70,.11);
+  --bar:#0e1620;
+  --bar-ink:#eef4f8;
+  --bar-ink-2:#8fa0ae;
+  --bar-line:#27323e;
+  --bar-hover:#1b2632;
+  --shadow:0 1px 2px rgba(14,22,32,.05), 0 8px 24px rgba(14,22,32,.06);
+  --shadow-lg:0 2px 8px rgba(14,22,32,.07), 0 24px 54px rgba(14,22,32,.13);
   --radius:12px;
 
   --sans:"IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
@@ -41,37 +49,39 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --ground:#0f141a;
-    --surface:#191f27;
-    --surface-2:#141a21;
-    --ink:#e9eef3;
-    --ink-2:#a6b2bf;
-    --ink-3:#73818f;
-    --line:#2b343f;
-    --line-soft:#222a33;
-    --accent:#e56a41;
-    --accent-ink:#1c1006;
-    --accent-soft:#372012;
-    --pitch:#42a877;
-    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.35);
-    --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 24px 54px rgba(0,0,0,.45);
+    --ground:#0b0f14;
+    --surface:#161d25;
+    --surface-2:#111820;
+    --surface-3:#1d2732;
+    --ink:#e8eef4;
+    --ink-2:#a3b0bd;
+    --ink-3:#71808d;
+    --line:#2a333e;
+    --line-soft:#212a34;
+    --accent:#e46b42;
+    --accent-2:#f08a63;
+    --accent-ink:#1a0f05;
+    --accent-soft:#35200f;
+    --pitch:#3fa877;
+    --chalk:rgba(63,168,119,.10);
+    --bar:#070b0f;
+    --bar-ink:#e6eef4;
+    --bar-ink-2:#8695a3;
+    --bar-line:#1d2731;
+    --bar-hover:#141d26;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.32);
+    --shadow-lg:0 2px 8px rgba(0,0,0,.5), 0 26px 56px rgba(0,0,0,.45);
   }
 }
 :root[data-theme="dark"]{
-  --ground:#0f141a;
-  --surface:#191f27;
-  --surface-2:#141a21;
-  --ink:#e9eef3;
-  --ink-2:#a6b2bf;
-  --ink-3:#73818f;
-  --line:#2b343f;
-  --line-soft:#222a33;
-  --accent:#e56a41;
-  --accent-ink:#1c1006;
-  --accent-soft:#372012;
-  --pitch:#42a877;
-  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.35);
-  --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 24px 54px rgba(0,0,0,.45);
+  --ground:#0b0f14; --surface:#161d25; --surface-2:#111820; --surface-3:#1d2732;
+  --ink:#e8eef4; --ink-2:#a3b0bd; --ink-3:#71808d;
+  --line:#2a333e; --line-soft:#212a34;
+  --accent:#e46b42; --accent-2:#f08a63; --accent-ink:#1a0f05; --accent-soft:#35200f;
+  --pitch:#3fa877; --chalk:rgba(63,168,119,.10);
+  --bar:#070b0f; --bar-ink:#e6eef4; --bar-ink-2:#8695a3; --bar-line:#1d2731; --bar-hover:#141d26;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.32);
+  --shadow-lg:0 2px 8px rgba(0,0,0,.5), 0 26px 56px rgba(0,0,0,.45);
 }
 
 *{box-sizing:border-box}
@@ -81,58 +91,62 @@ body{
   font-family:var(--sans);font-size:14px;line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.02em}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px}
 
 /* ═════════════════════════════════════════════
-   앱 셸
+   상단 바 — 어두운 스코어보드
    ═════════════════════════════════════════════ */
 .topbar{
   position:sticky;top:0;z-index:40;
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding:13px 26px;
-  background:color-mix(in srgb, var(--surface) 90%, transparent);
-  backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  min-height:60px;padding:9px 24px;
+  background:var(--bar);color:var(--bar-ink);
+  border-bottom:1px solid var(--bar-line);
 }
-.topbar::after{
-  content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
-  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 22%, transparent 22%);
-  opacity:.85;
-}
-.brand{display:flex;align-items:baseline;gap:11px;margin-right:auto;min-width:0}
-.brand h1{font-size:17px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto;min-width:0}
+.brand .tick{width:3px;height:22px;border-radius:2px;background:var(--accent);flex:0 0 auto}
+.brand h1{font-size:16.5px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;color:var(--bar-ink)}
 .brand .tag{
-  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--ink-3);white-space:nowrap;
+  font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+  color:var(--bar-ink-2);white-space:nowrap;
+  padding:3px 8px;border:1px solid var(--bar-line);border-radius:5px;
 }
-.saved{font-size:12px;color:var(--ink-3);font-family:var(--mono);transition:color .2s}
-.saved.on{color:var(--pitch)}
-.saved.warn{color:var(--accent);font-weight:600}
+@media (max-width:700px){.brand .tag{display:none}}
+.saved{
+  font-family:var(--mono);font-size:11.5px;color:var(--bar-ink-2);
+  white-space:nowrap;transition:color .2s;
+}
+.saved.on{color:#5fd39b}
+.saved.warn{color:#ffa06b;font-weight:500}
 
 .btn{
   display:inline-flex;align-items:center;gap:7px;
-  padding:8px 15px;border-radius:9px;border:1px solid var(--line);
+  padding:8px 15px;border-radius:8px;border:1px solid var(--line);
   background:var(--surface);color:var(--ink);
   font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
-  transition:background .14s, border-color .14s, transform .07s, box-shadow .14s;
+  transition:background .14s, border-color .14s, color .14s, transform .07s;
 }
 .btn:hover{background:var(--surface-2);border-color:var(--ink-3)}
 .btn:active{transform:translateY(1px)}
-.btn.primary{
-  background:var(--accent);border-color:var(--accent);color:var(--accent-ink);
-  box-shadow:0 1px 2px color-mix(in srgb, var(--accent) 40%, transparent);
-}
-.btn.primary:hover{filter:brightness(1.07);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
 .btn.ghost:hover{background:var(--surface-2)}
-.btn.sm{padding:5px 11px;font-size:12px;border-radius:7px}
+.btn.sm{padding:6px 11px;font-size:12px;border-radius:7px}
 .btn.danger:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.topbar .btn{background:transparent;border-color:#36424f;color:var(--bar-ink)}
+.topbar .btn:hover{background:var(--bar-hover);border-color:#4a5764}
+.topbar .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.topbar .btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
 
-.wrap{max-width:1300px;margin:0 auto;padding:26px}
-.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,392px);gap:26px;align-items:start}
-@media (max-width:1040px){.cols{grid-template-columns:1fr}.preview-col{position:static !important}}
+/* ═════════════════════════════════════════════
+   레이아웃 · 패널
+   ═════════════════════════════════════════════ */
+.wrap{max-width:1320px;margin:0 auto;padding:26px 26px 8px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:26px;align-items:start}
+@media (max-width:1060px){.cols{grid-template-columns:1fr}.preview-col{position:static !important}}
 
 .panel{
   background:var(--surface);
@@ -140,94 +154,124 @@ button,input,select,textarea{font:inherit;color:inherit}
   border-radius:var(--radius);
   box-shadow:var(--shadow);
   margin-bottom:22px;
-  overflow:hidden;
 }
 .panel > header{
-  display:flex;align-items:center;gap:11px;
-  padding:15px 19px;border-bottom:1px solid var(--line-soft);
+  display:flex;align-items:center;gap:12px;
+  padding:16px 20px 15px;
+  border-bottom:1px solid var(--line-soft);
 }
-.panel > header h2{font-size:14.5px;font-weight:700}
-.panel > header .hint{margin-left:auto;font-size:12px;color:var(--ink-3);text-align:right}
-.panel .body{padding:19px}
+.panel > header h2{font-size:15px;font-weight:800}
+.panel > header .hint{
+  margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  color:var(--ink-3);text-align:right;
+}
+.panel .body{padding:20px}
+.panel.note-panel{background:var(--surface-2)}
 
 .step{
-  flex:0 0 auto;width:23px;height:23px;border-radius:7px;
+  flex:0 0 auto;width:24px;height:24px;border-radius:50%;
   display:grid;place-items:center;
-  background:var(--ink);color:var(--surface);
+  background:var(--accent-soft);color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   font-family:var(--mono);font-size:11px;font-weight:600;
 }
 
 /* 폼 */
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:15px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
 .field:last-child{margin-bottom:0}
-.field > label{font-size:12px;font-weight:600;color:var(--ink-2)}
+.field > label{
+  font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);
+}
 .field .note{font-size:11.5px;color:var(--ink-3);line-height:1.5;word-break:keep-all}
 .field .note b{color:var(--ink-2);font-weight:600}
 input[type=text],textarea{
-  width:100%;padding:9px 11px;
+  width:100%;padding:9px 12px;
   background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
-  transition:border-color .14s, background .14s;
+  transition:border-color .14s, background .14s, box-shadow .14s;
 }
 input[type=text]:hover,textarea:hover{border-color:var(--ink-3)}
-input[type=text]:focus,textarea:focus{background:var(--surface);border-color:var(--accent);outline:none}
+input[type=text]:focus,textarea:focus{
+  background:var(--surface);border-color:var(--accent);outline:none;
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
 textarea{resize:vertical;line-height:1.7}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media (max-width:560px){.row2{grid-template-columns:1fr}}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .sw{
-  width:27px;height:27px;border-radius:50%;padding:0;cursor:pointer;
+  width:28px;height:28px;border-radius:50%;padding:0;cursor:pointer;
   border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);
   transition:box-shadow .14s, transform .1s;
 }
-.sw:hover{transform:scale(1.08)}
+.sw:hover{transform:scale(1.1)}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
-input[type=color]{width:36px;height:29px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer}
+input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer}
 .check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);cursor:pointer;user-select:none}
 
-/* 스타일 고르기 */
-.stylepick{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
-@media (max-width:620px){.stylepick{grid-template-columns:1fr}}
+/* 카드 디자인 고르기 */
+.stylepick{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+@media (max-width:760px){.stylepick{grid-template-columns:1fr}}
 .styleopt{
-  display:flex;flex-direction:column;gap:0;padding:0;cursor:pointer;text-align:left;
-  background:var(--surface-2);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;
-  transition:border-color .14s, box-shadow .14s, transform .1s;
+  position:relative;cursor:pointer;text-align:left;
+  background:var(--surface-2);border:1.5px solid var(--line);border-radius:11px;overflow:hidden;
+  transition:border-color .15s, box-shadow .15s, transform .12s;
 }
-.styleopt:hover{border-color:var(--ink-3);transform:translateY(-2px)}
-.styleopt[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.styleopt:hover{border-color:var(--ink-3);transform:translateY(-2px);box-shadow:var(--shadow)}
+.styleopt[aria-pressed="true"]{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface);
+}
 .styleopt .mini{
-  height:97px;overflow:hidden;position:relative;
-  background:var(--surface);border-bottom:1px solid var(--line-soft);
-  display:grid;place-items:center;
+  height:166px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  border-bottom:1px solid var(--line-soft);
 }
-.styleopt .mini > div{transform:scale(.425);transform-origin:center;flex:0 0 auto}
-.styleopt .cap{padding:8px 11px;display:flex;flex-direction:column;gap:1px}
-.styleopt .cap b{font-family:var(--display);font-size:12.5px;font-weight:700}
-.styleopt .cap span{font-size:10.5px;color:var(--ink-3);line-height:1.4}
+.styleopt .mini > div{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(.74);
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
+}
+.styleopt .cap{padding:11px 13px 12px;display:flex;flex-direction:column;gap:3px}
+.styleopt .cap b{font-family:var(--display);font-size:13.5px;font-weight:800}
+.styleopt .cap span{font-size:11px;color:var(--ink-3);line-height:1.45;word-break:keep-all}
+.styleopt .mark{
+  position:absolute;top:9px;right:9px;z-index:2;
+  padding:3px 8px;border-radius:20px;
+  background:var(--accent);color:#fff;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;
+  opacity:0;transform:translateY(-4px);transition:opacity .15s, transform .15s;
+}
+.styleopt[aria-pressed="true"] .mark{opacity:1;transform:none}
 
-/* 미리보기 */
-.preview-col{position:sticky;top:80px}
+/* ═════════════════════════════════════════════
+   미리보기 무대 — 새벽 운동장
+   ═════════════════════════════════════════════ */
+.preview-col{position:sticky;top:82px}
 .stage{
-  position:relative;padding:26px 20px;
+  position:relative;padding:26px 20px 28px;
   display:flex;flex-direction:column;align-items:center;gap:10px;
-  background:
-    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--surface) 100%, transparent) 0%, var(--surface-2) 100%);
+  background:var(--surface);
+  border-radius:0 0 0 0;
+  overflow:hidden;
 }
 .stage::before{
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background-image:linear-gradient(var(--line-soft) 1px, transparent 1px),
-                   linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
-  background-size:22px 22px;
-  mask-image:radial-gradient(80% 70% at 50% 45%, #000 20%, transparent 100%);
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 71px, var(--chalk) 71px, var(--chalk) 72.4px, transparent 72.4px),
+    linear-gradient(to right, transparent calc(50% - .7px), var(--chalk) calc(50% - .7px), var(--chalk) calc(50% + .7px), transparent calc(50% + .7px)),
+    linear-gradient(180deg, color-mix(in srgb, var(--pitch) 5%, transparent), transparent 60%);
 }
 .stage-label{
-  position:relative;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-3);align-self:flex-start;margin-top:6px;
+  position:relative;align-self:flex-start;margin-top:6px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);
 }
 .stage-label:first-child{margin-top:0}
 .stage .cardslot{position:relative}
 .flipnav{
   display:flex;gap:7px;align-items:center;
-  padding:12px 19px;border-top:1px solid var(--line-soft);background:var(--surface-2);
+  padding:12px 20px;border-top:1px solid var(--line-soft);background:var(--surface-2);
+  border-radius:0 0 var(--radius) var(--radius);
 }
 .who{
   margin-left:auto;font-size:12px;color:var(--ink-2);
@@ -461,72 +505,121 @@ input[type=color]{width:36px;height:29px;padding:2px;border:1px solid var(--line
 }
 
 /* ═════════════════════════════════════════════
-   명단 표
+   명단 — 엑셀형 격자
    ═════════════════════════════════════════════ */
-.paste{width:100%;min-height:78px;font-family:var(--mono);font-size:12px}
-.tablewrap{overflow-x:auto;border-top:1px solid var(--line-soft)}
-table{border-collapse:collapse;width:100%;min-width:740px}
-th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line-soft);vertical-align:middle}
-th{
-  font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--ink-3);background:var(--surface-2);position:sticky;top:0;z-index:2;
+.hintbar{
+  display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;
+  padding:12px 14px;border-radius:9px;
+  background:var(--accent-soft);
+  border:1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  font-size:12.5px;line-height:1.6;color:var(--ink);word-break:keep-all;
 }
-td input[type=text]{padding:6px 8px;border-color:transparent;background:transparent}
-td input[type=text]:hover{border-color:var(--line);background:var(--surface-2)}
-td input[type=text]:focus{border-color:var(--accent);background:var(--surface)}
-tbody tr{transition:background .12s}
-tbody tr:hover{background:var(--surface-2)}
-tbody tr.sel{background:var(--accent-soft)}
-tbody tr.sel .idx{color:var(--accent);font-weight:600}
-.idx{font-family:var(--mono);font-size:12px;color:var(--ink-3);width:36px;text-align:right}
+.hintbar .keys{display:flex;gap:4px;flex:0 0 auto;padding-top:1px}
+.kbd{
+  font-family:var(--mono);font-size:10.5px;font-weight:600;
+  padding:2px 7px;border-radius:5px;
+  background:var(--surface);color:var(--ink-2);
+  border:1px solid var(--line);border-bottom-width:2px;
+}
+.hintrow{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
+.hintrow .note{flex:1;font-size:11.5px;color:var(--ink-3);line-height:1.55;word-break:keep-all}
+.hintrow .note b{color:var(--ink-2);font-weight:600}
+
+.gridwrap{overflow-x:auto;border-top:1px solid var(--line)}
+table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:780px;background:var(--surface)}
+.grid th,.grid td{border-bottom:1px solid var(--line-soft);border-right:1px solid var(--line-soft)}
+.grid th:last-child,.grid td:last-child{border-right:none}
+.grid thead th{
+  position:sticky;top:0;z-index:3;background:var(--surface-3);
+  padding:9px 12px;text-align:left;border-bottom:1.5px solid var(--line);
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-2);
+}
+.grid thead th.gut{text-align:center;padding:9px 0}
+.grid td.gut{
+  width:42px;background:var(--surface-2);text-align:center;
+  font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  user-select:none;
+}
+.grid tbody tr:hover td.gut{background:var(--surface-3);color:var(--ink-2)}
+.grid tbody tr.sel td.gut{background:var(--accent);color:#fff}
+.grid td.cell{padding:0;position:relative}
+.grid td.cell input{
+  width:100%;display:block;
+  padding:9px 12px;border:none;border-radius:0;background:transparent;
+  font-size:13.5px;
+}
+.grid td.cell input::placeholder{color:var(--ink-3);opacity:.55}
+.grid td.cell input:hover{background:var(--surface-2)}
+.grid td.cell input:focus{
+  outline:2px solid var(--accent);outline-offset:-2px;
+  background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft);
+  position:relative;z-index:2;
+}
+.grid td.cell input.mono{font-family:var(--mono);font-size:12.5px}
+.grid td.pc{width:58px;padding:5px 0;text-align:center}
+.grid td.del{width:44px;text-align:center;padding:0}
+.grid td.del button{
+  width:26px;height:26px;padding:0;border-radius:6px;line-height:1;
+  border:1px solid transparent;background:transparent;color:var(--ink-3);
+  font-size:12px;cursor:pointer;transition:background .12s, color .12s;
+}
+.grid td.del button:hover{background:var(--accent-soft);color:var(--accent)}
 .thumb{
-  width:36px;height:46px;border-radius:5px;border:1px dashed var(--line);
-  background:var(--surface-2);overflow:hidden;display:grid;place-items:center;cursor:pointer;
+  width:36px;height:46px;margin:0 auto;border-radius:5px;
+  border:1px dashed var(--line);background:var(--surface-2);
+  overflow:hidden;display:grid;place-items:center;cursor:pointer;
   transition:border-color .14s;
 }
 .thumb:hover{border-color:var(--accent)}
 .thumb img{width:100%;height:100%;object-fit:cover}
-.thumb span{font-size:15px;color:var(--ink-3);line-height:1}
+.thumb span{font-size:14px;color:var(--ink-3);line-height:1}
 .thumb.has{border-style:solid;border-color:var(--pitch)}
-.empty{padding:36px 19px;text-align:center;color:var(--ink-3);font-size:13px}
-.tbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:14px 19px;border-top:1px solid var(--line-soft)}
-.count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
 
-/* 가이드 */
+.tbar{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:14px 20px;border-top:1px solid var(--line-soft);
+  border-radius:0 0 var(--radius) var(--radius);background:var(--surface-2);
+}
+.count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.count b{color:var(--accent);font-weight:600}
+
+/* 인쇄 가이드 */
 .spec{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;
-  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:9px;overflow:hidden;margin-bottom:17px;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:9px;
+  overflow:hidden;margin-bottom:18px;
 }
 .spec div{background:var(--surface);padding:11px 13px}
-.spec dt{font-size:10.5px;color:var(--ink-3);letter-spacing:.05em}
-.spec dd{margin:2px 0 0;font-family:var(--mono);font-size:13px;font-weight:600}
-.guide ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:13px;counter-reset:g}
+.spec dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.spec dd{margin:3px 0 0;font-family:var(--mono);font-size:13px;font-weight:600}
+.guide ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:14px;counter-reset:g}
 .guide li{
-  position:relative;padding-left:28px;color:var(--ink-2);word-break:keep-all;font-size:13px;line-height:1.62;
-  counter-increment:g;
+  position:relative;padding-left:28px;counter-increment:g;
+  color:var(--ink-2);word-break:keep-all;font-size:13px;line-height:1.62;
 }
 .guide li::before{
   content:counter(g);position:absolute;left:0;top:2px;
   width:19px;height:19px;border-radius:50%;display:grid;place-items:center;
-  background:var(--accent-soft);color:var(--accent);
+  background:var(--surface-3);color:var(--ink-2);
   font-family:var(--mono);font-size:10.5px;font-weight:600;
 }
 .guide li b{color:var(--ink);font-weight:600}
 .callout{
-  display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:9px;
+  display:flex;flex-direction:column;gap:4px;padding:13px 15px;border-radius:9px;
   background:var(--accent-soft);border:1px solid color-mix(in srgb, var(--accent) 26%, transparent);
-  font-size:12.5px;line-height:1.6;color:var(--ink);word-break:keep-all;margin-top:17px;
+  font-size:12.5px;line-height:1.6;color:var(--ink);word-break:keep-all;margin-top:18px;
 }
 .callout b{font-weight:600}
 .callout.quiet{background:var(--surface-2);border-color:var(--line)}
 
 .sitefoot{
-  max-width:1300px;margin:0 auto;padding:4px 26px 40px;
-  display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;
-  font-size:12px;color:var(--ink-3);
+  max-width:1320px;margin:0 auto;padding:2px 26px 40px;
+  display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;
+  font-size:11.5px;color:var(--ink-3);
 }
 .sitefoot a{color:var(--ink-2)}
-.sitefoot .sep{opacity:.5}
+.sitefoot .sep{opacity:.45}
 
 /* ═════════════════════════════════════════════
    인쇄 배치 — A4 2열 × 5행 = 10장
@@ -534,7 +627,7 @@ tbody tr.sel .idx{color:var(--accent);font-weight:600}
 .sheets{display:none}
 body.showsheets .sheets{display:flex;flex-direction:column;align-items:center;gap:20px;padding:0 26px 44px;overflow-x:auto}
 .sheetslot{overflow:hidden}
-.sheetbox{width:210mm;transform:scale(var(--sheetscale));transform-origin:top center;box-shadow:var(--shadow-lg)}
+.sheetbox{width:210mm;transform:scale(var(--sheetscale));transform-origin:top left;box-shadow:var(--shadow-lg)}
 .sheet{
   width:210mm;height:297mm;background:#fff;padding:8.7mm 17mm;
   display:grid;grid-template-columns:repeat(2,86mm);grid-template-rows:repeat(5,54mm);
@@ -549,6 +642,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   html,body{background:#fff !important}
   .topbar,.wrap,.sitefoot{display:none !important}
   .sheets{display:block !important;padding:0}
+  .sheetslot{width:auto !important;height:auto !important;overflow:visible !important}
   .sheetbox{transform:none !important;width:auto;box-shadow:none;margin:0}
   .sheet{page-break-after:always;break-after:page}
   .sheet:last-child{page-break-after:auto;break-after:auto}
@@ -560,6 +654,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 <body>
 <div class="topbar">
   <div class="brand">
+    <span class="tick" aria-hidden="true"></span>
     <h1>조기축구 회원증 메이커</h1>
     <span class="tag">86 × 54 mm · CR80</span>
   </div>
@@ -654,30 +749,25 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 
       <section class="panel">
         <header><span class="step">4</span><h2>회원 명단</h2><span class="hint">엑셀에서 복사 → 붙여넣기</span></header>
-        <div class="body" style="padding-bottom:15px">
-          <div class="field">
-            <label for="fPaste">엑셀 붙여넣기</label>
-            <textarea class="paste" id="fPaste" placeholder="이름	등번호	생년월일	소속팀
-정경호	14	1967-11-14	새벽FC
-김민수	7	1982.03.21	새벽FC"></textarea>
-            <span class="note">첫 줄이 <b>이름 / 등번호 / 생년월일 / 소속팀</b> 머리글이면 알아서 인식하고, 머리글이 없으면 왼쪽부터 그 순서로 읽습니다.</span>
+        <div class="body">
+          <div class="hintbar">
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">V</span></span>
+            <span>엑셀에서 셀 범위를 복사한 뒤, 아래 표에서 <b>시작할 칸을 클릭하고 붙여넣으세요.</b> 여러 줄을 한 번에 채우고, 행이 모자라면 알아서 늘어납니다.</span>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn primary sm" id="btnParse">명단 불러오기</button>
-            <button class="btn sm" id="btnParseAdd">기존 명단에 추가</button>
-            <button class="btn sm ghost" id="btnSample">예시로 채워보기</button>
+          <div class="hintrow">
+            <span class="note">첫 줄이 <b>이름 / 등번호 / 생년월일 / 소속팀</b> 머리글이면 순서를 알아서 맞춥니다. 방향키로 칸을 옮기고 <b>Enter</b> 로 아랫줄, <b>Tab</b> 으로 옆 칸.</span>
+            <button class="btn sm" id="btnSample">예시로 채워보기</button>
           </div>
         </div>
-        <div class="tablewrap">
-          <table>
+        <div class="gridwrap">
+          <table class="grid">
             <thead><tr>
-              <th class="idx">#</th><th style="width:54px">사진</th><th>이름</th>
-              <th style="width:76px">등번호</th><th style="width:132px">생년월일</th>
-              <th>소속팀 / 포지션</th><th style="width:46px"></th>
+              <th class="gut">#</th><th style="width:58px">사진</th><th>이름</th>
+              <th style="width:82px">등번호</th><th style="width:126px">생년월일</th>
+              <th>소속팀 / 포지션</th><th style="width:44px"></th>
             </tr></thead>
             <tbody id="tbody"></tbody>
           </table>
-          <div class="empty" id="emptyMsg">아직 회원이 없습니다. 위에 명단을 붙여넣거나 <b>회원 추가</b>를 눌러 시작하세요.</div>
         </div>
         <div class="tbar">
           <button class="btn sm" id="btnAdd">＋ 회원 추가</button>
@@ -706,8 +796,8 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
         </div>
       </section>
 
-      <section class="panel guide">
-        <header><span class="step">5</span><h2>인쇄해서 만드는 법</h2></header>
+      <section class="panel guide note-panel">
+        <header><h2>인쇄해서 만드는 법</h2><span class="hint">A4 · CR80</span></header>
         <div class="body">
           <div class="spec">
             <div><dt>카드 규격</dt><dd>86 × 54</dd></div>
@@ -907,8 +997,10 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       const n = Array.isArray(p.members) ? p.members.length : 0;
       if(state.members.length && !confirm(`지금 입력된 ${state.members.length}명을 백업 파일의 ${n}명으로 바꿉니다. 계속할까요?`)) return;
       state = normalize(p);
-      cursor = 0;
-      hydrate(); renderTable(); renderAll(); save();
+      renderTable();
+      const f = state.members.findIndex(hasContent);
+      cursor = f >= 0 ? f : 0;
+      hydrate(); renderAll(); save();
       setSaved(`백업을 불러왔습니다 · ${n}명`, true);
     };
     fr.onerror = ()=>setSaved("백업 파일을 읽지 못했습니다", false);
@@ -975,6 +1067,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     return m.photo ? `<img src="${m.photo}" alt="">` : `<span class="ph">증명사진<br>3 × 4</span>`;
   }
   const blank = {name:"",no:"",birth:"",team:"",photo:null};
+  const DEMO  = {name:"정경호", no:"14", birth:"1967-11-14", team:"새벽FC", photo:null};
 
   function frontHTML(m, opt){
     m = m || blank; opt = opt||{};
@@ -1095,22 +1188,26 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   /* ── 렌더 ──────────────────────────────── */
   function renderPreview(){
     const punch = $("#cbPunch").checked;
-    const m = state.members[cursor] || blank;
+    const m = hasContent(state.members[cursor])
+      ? state.members[cursor]
+      : (filled()[0] || DEMO);
     $("#frontMount").innerHTML = frontHTML(m, {punch});
     $("#backMount").innerHTML  = backHTML({punch});
-    $("#who").innerHTML = state.members.length
-      ? `<b>${cursor+1}/${state.members.length}</b> ${esc(m.name)||"이름 없음"}`
-      : "예시 카드";
+    const fl = filled();
+    $("#who").innerHTML = hasContent(m)
+      ? `<b>${fl.indexOf(m)+1}/${fl.length}</b> ${esc(m.name)||"이름 없음"}`
+      : (fl.length ? `${fl.length}명 입력됨 · 빈 줄` : "예시 카드");
     $$("#tbody tr").forEach((tr,i)=>tr.classList.toggle("sel", i===cursor));
   }
 
   function renderStyles(){
-    const sample = state.members[cursor] || {name:"정경호", no:"14", birth:"1967-11-14", team:"새벽FC", photo:null};
+    const sample = (hasContent(state.members[cursor]) ? state.members[cursor] : filled()[0]) || DEMO;
     const keep = state.club.style;
     $("#stylepick").innerHTML = STYLES.map(s=>{
       state.club.style = s.id;
       const mini = frontHTML(sample);
       return `<div class="styleopt" role="button" tabindex="0" data-style="${s.id}" aria-pressed="${String(s.id===keep)}">
+        <span class="mark">선택됨</span>
         <div class="mini">${mini}</div>
         <div class="cap"><b>${s.name}</b><span>${s.desc}</span></div>
       </div>`;
@@ -1118,24 +1215,91 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     state.club.style = keep;
   }
 
+  /* ── 엑셀형 격자 ─────────────────────────────────────────
+     열 순서가 곧 붙여넣기 순서다. 마지막 줄은 항상 비워 두고,
+     거기에 뭔가 적히면 새 빈 줄을 하나 더 붙인다. 인쇄와 인원수는
+     내용이 있는 줄만 센다. */
+  const COLS = ["name","no","birth","team"];
+  const BLANK_ROWS = 5;
+  const newMember = ()=>({id:++uid,name:"",no:"",birth:"",team:"",photo:null});
+  const hasContent = m => !!(m && (m.name||m.no||m.birth||m.team||m.photo));
+  const filled = ()=>state.members.filter(hasContent);
+
+  function ensureBlankTail(){
+    if(!state.members.length){
+      for(let i=0;i<BLANK_ROWS;i++) state.members.push(newMember());
+      return;
+    }
+    const last = state.members[state.members.length-1];
+    if(hasContent(last)) state.members.push(newMember());
+  }
+
   function renderTable(){
+    ensureBlankTail();
     $("#tbody").innerHTML = state.members.map((m,i)=>`
       <tr data-i="${i}">
-        <td class="idx">${i+1}</td>
-        <td><div class="thumb${m.photo?" has":""}" data-photo="${i}" title="증명사진 넣기">
+        <td class="gut">${i+1}</td>
+        <td class="pc"><div class="thumb${m.photo?" has":""}" data-photo="${i}" title="증명사진 넣기">
           ${m.photo?`<img src="${m.photo}" alt="">`:`<span>＋</span>`}</div></td>
-        <td><input type="text" value="${esc(m.name)}" data-f="name" placeholder="이름"></td>
-        <td><input type="text" value="${esc(m.no)}" data-f="no" placeholder="－"></td>
-        <td><input type="text" value="${esc(m.birth)}" data-f="birth" placeholder="1967-11-14"></td>
-        <td><input type="text" value="${esc(m.team)}" data-f="team" placeholder="소속팀"></td>
-        <td><button class="btn sm ghost danger" data-del="${i}" title="삭제">✕</button></td>
+        <td class="cell"><input type="text" value="${esc(m.name)}" data-f="name" placeholder="이름"></td>
+        <td class="cell"><input type="text" class="mono" value="${esc(m.no)}" data-f="no" placeholder="－"></td>
+        <td class="cell"><input type="text" class="mono" value="${esc(m.birth)}" data-f="birth" placeholder="1967-11-14"></td>
+        <td class="cell"><input type="text" value="${esc(m.team)}" data-f="team" placeholder="소속팀"></td>
+        <td class="del"><button data-del="${i}" tabindex="-1" title="이 줄 지우기" aria-label="${i+1}번 줄 지우기">✕</button></td>
       </tr>`).join("");
-    $("#emptyMsg").hidden = state.members.length>0;
-    $("#count").textContent = `${state.members.length}명 · A4 ${Math.ceil(state.members.length/10)||0}장`;
+    const n = filled().length;
+    $("#count").innerHTML = `<b>${n}</b>명 · A4 ${Math.ceil(n/10)||0}장`;
+  }
+
+  /* 붙여넣은 표를 셀 단위로 푼다 (엑셀=탭, CSV=따옴표 처리) */
+  function splitCSV(line){
+    const out=[]; let cur="", q=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(q){
+        if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; }
+        else cur+=ch;
+      }
+      else if(ch==='"') q=true;
+      else if(ch===","){ out.push(cur); cur=""; }
+      else cur+=ch;
+    }
+    out.push(cur); return out;
+  }
+  function splitBlock(text){
+    return text.replace(/\r\n?/g,"\n").replace(/\n+$/,"").split("\n")
+      .map(line => line.includes("\t") ? line.split("\t") : splitCSV(line))
+      .map(cells => cells.map(c=>c.trim()));
+  }
+
+  function applyGridPaste(text, r0, c0){
+    let rows = splitBlock(text);
+    if(!rows.length) return null;
+    let order = COLS.slice(c0);
+    const head = rows[0].map(c=>{ for(const k in HEAD) if(HEAD[k].test(c)) return k; return null; });
+    if(head.some(Boolean)){ order = head; rows.shift(); }
+    if(!rows.length) return null;
+
+    rows.forEach((cells, ri)=>{
+      const r = r0 + ri;
+      while(state.members.length <= r) state.members.push(newMember());
+      cells.forEach((val, ci)=>{
+        const f = order[ci];
+        if(f && COLS.includes(f)) state.members[r][f] = val;
+      });
+    });
+    return {row:r0+rows.length-1, added:rows.length};
+  }
+
+  function focusCell(r, f, caretEnd){
+    const el = document.querySelector(`#tbody tr[data-i="${r}"] input[data-f="${f}"]`);
+    if(!el) return;
+    el.focus();
+    if(caretEnd) el.setSelectionRange(el.value.length, el.value.length);
   }
 
   function renderSheets(){
-    const per=10, cols=2, ms=state.members;
+    const per=10, cols=2, ms=filled();
     const pages = Math.max(1, Math.ceil(ms.length/per));
     let html="";
     for(let p=0;p<pages;p++){
@@ -1155,7 +1319,10 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   }
   function fitSheets(){
     const sc = parseFloat(getComputedStyle(document.body).getPropertyValue("--sheetscale")) || .62;
-    $$("#sheets .sheetslot").forEach(s=>{ s.style.height = (297*3.7795*sc)+"px"; });
+    $$("#sheets .sheetslot").forEach(s=>{
+      s.style.height = (297*3.7795*sc)+"px";
+      s.style.width  = (210*3.7795*sc)+"px";
+    });
   }
   function renderAll(){ renderPreview(); renderStyles(); renderSheets(); }
 
@@ -1194,26 +1361,6 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     birth:/^(생년월일|생일|생 *년 *월 *일|birth|dob)$/i,
     team:/^(소속팀|소속|팀|팀명|포지션|team)$/i
   };
-  function parsePaste(text){
-    const rows = text.split(/\r?\n/).map(r=>r.trim()).filter(Boolean)
-      .map(r=> (r.includes("\t") ? r.split("\t") : r.split(",")).map(c=>c.trim()));
-    if(!rows.length) return [];
-    let map={name:0,no:1,birth:2,team:3};
-    if(rows[0].some(c=>Object.values(HEAD).some(re=>re.test(c)))){
-      map={name:-1,no:-1,birth:-1,team:-1};
-      rows[0].forEach((c,i)=>{ for(const k in HEAD) if(HEAD[k].test(c)&&map[k]<0) map[k]=i; });
-      rows.shift();
-    }
-    return rows.map(cs=>({
-      id:++uid,
-      name: map.name >=0?(cs[map.name] ||""):"",
-      no:   map.no   >=0?(cs[map.no]   ||""):"",
-      birth:map.birth>=0?(cs[map.birth]||""):"",
-      team: map.team >=0?(cs[map.team] ||""):"",
-      photo:null
-    })).filter(m=>m.name||m.birth);
-  }
-
   /* ── 이벤트 ────────────────────────────── */
   $$("[data-club]").forEach(el=>el.addEventListener("input",()=>{
     state.club[el.dataset.club]=el.value; renderAll(); save();
@@ -1248,11 +1395,59 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   }
 
   const tb=$("#tbody");
+  let sheetTimer=null;
+  const renderSheetsSoon = ()=>{ clearTimeout(sheetTimer); sheetTimer=setTimeout(renderSheets,300); };
+
   tb.addEventListener("input",e=>{
     const inp=e.target.closest("input[data-f]"); if(!inp) return;
-    state.members[+inp.closest("tr").dataset.i][inp.dataset.f]=inp.value;
-    renderPreview(); renderSheets(); save();
+    const r=+inp.closest("tr").dataset.i, f=inp.dataset.f;
+    state.members[r][f]=inp.value;
+    // 마지막 줄에 뭔가 적히면 빈 줄을 한 칸 더 붙인다
+    if(r===state.members.length-1 && hasContent(state.members[r])){
+      const caret=inp.selectionStart;
+      renderTable(); renderStyles();
+      focusCell(r,f); 
+      const el=document.querySelector(`#tbody tr[data-i="${r}"] input[data-f="${f}"]`);
+      if(el && caret!=null) el.setSelectionRange(caret,caret);
+    } else {
+      $("#count").innerHTML = `<b>${filled().length}</b>명 · A4 ${Math.ceil(filled().length/10)||0}장`;
+      renderStyles();
+    }
+    renderPreview(); renderSheetsSoon(); save();
   });
+
+  // 엑셀 셀 범위 붙여넣기
+  tb.addEventListener("paste",e=>{
+    const inp=e.target.closest("input[data-f]"); if(!inp) return;
+    const text=(e.clipboardData||window.clipboardData)?.getData("text/plain")||"";
+    if(!/[\t\n\r]/.test(text) && !text.includes(",")) return;   // 한 칸짜리는 기본 동작
+    e.preventDefault();
+    const r0=+inp.closest("tr").dataset.i, c0=Math.max(0,COLS.indexOf(inp.dataset.f));
+    const res=applyGridPaste(text, r0, c0);
+    if(!res) return;
+    cursor=r0;
+    renderTable(); renderAll(); save();
+    focusCell(res.row, COLS[c0], true);
+    setSaved(`${res.added}줄을 붙여넣었습니다`, true);
+  });
+
+  // 방향키·Enter 로 칸 이동
+  tb.addEventListener("keydown",e=>{
+    const inp=e.target.closest("input[data-f]"); if(!inp) return;
+    const tr=inp.closest("tr"), r=+tr.dataset.i, c=COLS.indexOf(inp.dataset.f);
+    const go=(dr,dc)=>{
+      const nr=r+dr, nc=c+dc;
+      if(nc<0||nc>=COLS.length) return;
+      if(nr<0) return;
+      if(nr>=state.members.length){ state.members.push(newMember()); renderTable(); }
+      e.preventDefault(); focusCell(nr, COLS[nc], true);
+    };
+    if(e.key==="Enter"||e.key==="ArrowDown") go(1,0);
+    else if(e.key==="ArrowUp") go(-1,0);
+    else if(e.key==="ArrowLeft" && inp.selectionStart===0 && inp.selectionEnd===0) go(0,-1);
+    else if(e.key==="ArrowRight" && inp.selectionStart===inp.value.length && inp.selectionEnd===inp.value.length) go(0,1);
+  });
+
   tb.addEventListener("click",e=>{
     const del=e.target.closest("[data-del]");
     if(del){
@@ -1289,22 +1484,16 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     renderAll(); save();
   });
 
-  function applyPaste(append){
-    const list=parsePaste($("#fPaste").value);
-    if(!list.length){ $("#fPaste").focus(); return; }
-    state.members = append ? state.members.concat(list) : list;
-    cursor=0; renderTable(); renderAll(); save(); $("#fPaste").value="";
-  }
-  $("#btnParse").addEventListener("click",()=>applyPaste(false));
-  $("#btnParseAdd").addEventListener("click",()=>applyPaste(true));
   $("#btnAdd").addEventListener("click",()=>{
-    state.members.push({id:++uid,name:"",no:"",birth:"",team:"",photo:null});
-    cursor=state.members.length-1; renderTable(); renderAll(); save();
-    const rows=$$("#tbody tr"); rows[rows.length-1]?.querySelector("input")?.focus();
+    state.members.push(newMember());
+    const r=state.members.length-1;
+    cursor=r; renderTable(); renderAll(); save();
+    focusCell(r,"name");
   });
   $("#btnClearAll").addEventListener("click",()=>{
-    if(!state.members.length) return;
-    if(!confirm(`회원 ${state.members.length}명을 모두 지웁니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
+    const n=filled().length;
+    if(!n) return;
+    if(!confirm(`회원 ${n}명을 모두 지웁니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
     state.members=[]; cursor=0; renderTable(); renderAll(); save();
   });
   $("#btnExport").addEventListener("click", exportBackup);
@@ -1313,12 +1502,20 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     const f=e.target.files[0]; if(f) importBackup(f);
   });
   $("#btnSample").addEventListener("click",()=>{
-    $("#fPaste").value="이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t새벽FC\n김민수\t7\t1982.03.21\t새벽FC\n박정훈\t10\t790506\t새벽FC";
-    applyPaste(false);
+    state.members=[]; 
+    applyGridPaste("이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t새벽FC\n김민수\t7\t1982.03.21\t새벽FC\n박정훈\t10\t790506\t새벽FC", 0, 0);
+    cursor=0; renderTable(); renderAll(); save();
   });
 
-  $("#prevM").addEventListener("click",()=>{ if(state.members.length){ cursor=(cursor-1+state.members.length)%state.members.length; renderPreview(); }});
-  $("#nextM").addEventListener("click",()=>{ if(state.members.length){ cursor=(cursor+1)%state.members.length; renderPreview(); }});
+  function stepMember(d){
+    const idx = state.members.map((m,i)=>hasContent(m)?i:-1).filter(i=>i>=0);
+    if(!idx.length) return;
+    const at = idx.indexOf(cursor);
+    cursor = idx[(( (at<0?0:at) + d) % idx.length + idx.length) % idx.length];
+    renderPreview();
+  }
+  $("#prevM").addEventListener("click",()=>stepMember(-1));
+  $("#nextM").addEventListener("click",()=>stepMember(1));
   $("#cbPunch").addEventListener("change",renderPreview);
 
   $("#btnSheets").addEventListener("click",()=>{
@@ -1342,7 +1539,10 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   hydrate(); renderTable(); renderAll();
   loadState().then(st=>{
     state = st;
-    hydrate(); renderTable(); renderAll();
+    renderTable();                       // 빈 꼬리줄을 먼저 채워 넣고
+    const f = state.members.findIndex(hasContent);
+    cursor = f >= 0 ? f : 0;
+    hydrate(); renderAll();
     if(!useIDB) setSaved("임시 저장소로 동작 중 · 백업을 권합니다", false);
   }).catch(()=>setSaved("저장된 내용을 불러오지 못했습니다", false));
 })();
