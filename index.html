@@ -45,6 +45,7 @@
   --sans:"IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
   --display:"Gothic A1", "Apple SD Gothic Neo", sans-serif;
   --serif:"Nanum Myeongjo", "Apple SD Gothic Neo", serif;
+  --seal:"Black Han Sans", "Gothic A1", "Apple SD Gothic Neo", sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){
@@ -323,21 +324,20 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
   border:.62mm solid #b2372a;border-radius:.35mm;
   background:#fdfcfa;color:#b2372a;
   padding:.62mm;display:block;
-  transform:rotate(-4deg);
   print-color-adjust:exact;-webkit-print-color-adjust:exact;
 }
 .sealbox{display:flex;flex-direction:column;gap:.3mm;width:100%;height:100%}
 .sealrow{display:flex;flex:1;gap:.3mm;min-height:0}
 .sealrow span{
   flex:1;min-width:0;display:grid;place-items:center;
-  font-family:var(--display);font-weight:900;
-  font-size:calc((var(--sealw) - 3.2mm) / var(--n) * 0.88);
+  font-family:var(--seal);font-weight:400;
+  font-size:calc((var(--sealw) - 3.2mm) / var(--n) * 0.94);
   line-height:1;letter-spacing:-.02em;
   /* 한글 글자의 먹 면적은 em 상자의 8할쯤이다. 전각 도장처럼 칸의
      8할가량을 채우도록 늘리되, 이웃 글자와 붙지 않게 여유를 남긴다. */
   transform:scale(calc(var(--sx,1) * 1.06), 1.16);
 }
-.seal.img{border:none;border-radius:0;background:none;transform:rotate(-3.5deg)}
+.seal.img{border:none;border-radius:0;background:none;padding:0}
 .seal.img img{width:100%;height:100%;object-fit:contain;display:block}
 .isslogo{flex:0 0 auto;object-fit:contain;display:block}
 .isslogo.builtin{display:block;aspect-ratio:200/168}
@@ -390,14 +390,18 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .c-classic .foot{
   position:absolute;left:0;right:0;bottom:0;height:9mm;
   background:var(--band-tint);border-top:.2mm solid var(--band-line);
-  display:flex;align-items:center;gap:2mm;padding:0 3.2mm;
+  display:flex;flex-direction:column;justify-content:center;gap:.35mm;padding:0 3.2mm .8mm;
   print-color-adjust:exact;-webkit-print-color-adjust:exact;
 }
-.c-classic .foot .isslogo{height:6.4mm;margin-right:1.6mm}
-.c-classic .foot .issuer{display:flex;flex-direction:column;gap:.3mm;min-width:0}
-.c-classic .org{font-family:var(--display);font-weight:700;font-size:3mm;line-height:1.2;color:#1a222b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-classic .url{font-family:var(--mono);font-size:2.15mm;color:#54606c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-classic .seal{width:10.6mm;height:10.6mm;--sealw:10.6mm;margin-left:auto;align-self:flex-end;margin-bottom:.7mm;background:rgba(255,255,255,.6)}
+.c-classic .foot .isslogo{height:5mm;margin-right:1.5mm}
+.c-classic .orgline{position:relative;display:flex;align-items:center;width:max-content}
+.c-classic .orgline .seal{
+  position:absolute;left:100%;top:50%;
+  margin-left:1.2mm;margin-top:-.75mm;transform:translateY(-50%);
+}
+.c-classic .org{font-family:var(--display);font-weight:700;font-size:3.3mm;line-height:1.25;color:#1a222b;white-space:nowrap}
+.c-classic .url{font-family:var(--mono);font-size:2.15mm;line-height:1.25;color:#54606c;white-space:nowrap;width:max-content;max-width:100%}
+.c-classic .seal{width:10.2mm;height:10.2mm;--sealw:10.2mm}
 
 /* ── 스타일 B · 모던 ───────────────────── */
 .c-modern{background:#fff}
@@ -445,13 +449,15 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 }
 .c-modern .foot{
   position:absolute;left:3.6mm;right:3.6mm;bottom:2.8mm;
-  display:flex;align-items:flex-end;gap:1.6mm;
+  display:flex;align-items:center;gap:1.2mm;
   border-top:.2mm solid #e0e4e8;padding-top:1.5mm;
 }
-.c-modern .foot .isslogo{height:5.2mm;margin-right:1.2mm;align-self:center}
-.c-modern .org{font-family:var(--display);font-weight:700;font-size:2.7mm;line-height:1.2;color:#222a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-modern .url{font-family:var(--mono);font-size:2mm;color:#77828d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-modern .seal{width:8.6mm;height:8.6mm;--sealw:8.6mm;margin-left:auto;margin-bottom:-.6mm}
+.c-modern .txt{min-width:0;display:flex;flex-direction:column;gap:.25mm}
+.c-modern .foot .isslogo{height:4.8mm;margin-right:1mm;align-self:center}
+.c-modern .org{font-family:var(--display);font-weight:700;font-size:2.45mm;line-height:1.25;color:#222a33;white-space:nowrap}
+.c-modern .url{font-family:var(--mono);font-size:2mm;line-height:1.25;color:#77828d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-modern .seal{width:7.8mm;height:7.8mm;--sealw:7.8mm;margin-left:auto}
+.c-modern .orgline{display:flex;align-items:center}
 
 /* ── 스타일 C · 크레스트 ───────────────── */
 .c-crest{background:#fdfdfb}
@@ -1193,12 +1199,8 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       </dl>
     </div>
     <div class="foot">
-      ${issuerLogoHTML()}
-      <div class="issuer">
-        <div class="org">${esc(c.org)}</div>
-        ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
-      </div>
-      ${sealHTML()}
+      <div class="orgline">${issuerLogoHTML()}<span class="org">${esc(c.org)}</span>${sealHTML()}</div>
+      ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
     </div>
   </div>`;
   }
@@ -1221,9 +1223,8 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       <div class="mrow"><b>Team</b><span>${esc(m.team)||"—"}</span></div>
     </div>
     <div class="foot">
-      ${issuerLogoHTML()}
-      <div style="min-width:0">
-        <div class="org">${esc(c.org)}</div>
+      <div class="txt">
+        <div class="orgline">${issuerLogoHTML()}<span class="org">${esc(c.org)}</span></div>
         ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
       </div>
       ${sealHTML()}
