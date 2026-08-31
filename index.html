@@ -359,16 +359,18 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .c-classic .band.l2 span{font-size:4.3mm;letter-spacing:.13em;text-indent:.13em}
 .c-classic .band.l3 span{font-size:3.5mm;letter-spacing:.06em;text-indent:.06em}
 .c-classic .rule{height:.7mm;background:var(--band-deep);print-color-adjust:exact;-webkit-print-color-adjust:exact}
-.c-classic .plate{position:relative;height:42.9mm;padding:2.4mm 3.2mm 0}
+.c-classic .plate{position:relative;height:42.9mm;padding:2.4mm 3.2mm 2.4mm}
 .c-classic .wm{
   position:absolute;right:2.4mm;top:.4mm;width:30mm;height:30mm;
   opacity:.11;pointer-events:none;
 }
-.c-classic .main{position:relative;display:flex;gap:3.4mm}
+.c-classic .main{position:relative;display:flex;gap:3.4mm;height:100%}
 .c-classic .pblock{display:flex;flex-direction:column;gap:.9mm;width:21.5mm}
 .c-classic .memno{color:#3a444f}
 .c-classic .photo{width:21.5mm;height:27.4mm;border:.22mm solid #c6cac4}
-.c-classic dl{margin:0;flex:1;display:flex;flex-direction:column;gap:1.5mm;padding-top:2.6mm;min-width:0}
+.c-classic .col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.c-classic dl{margin:0;display:flex;flex-direction:column;gap:1.5mm;padding-top:1.4mm;min-width:0}
+.c-classic .issuer{display:flex;flex-direction:column;gap:.35mm}
 .c-classic .frow{
   display:grid;grid-template-columns:15.5mm 1fr;align-items:baseline;gap:1.6mm;
   padding-bottom:.9mm;border-bottom:.15mm solid rgba(18,22,27,.13);
@@ -387,13 +389,8 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .c-classic dd .jersey{font-size:3.1mm;color:#46525f}
 .c-classic dd.mono{font-family:var(--mono);font-weight:600;font-size:4.1mm;letter-spacing:-.03em}
 .c-classic dd.sm{font-size:3.9mm;font-weight:500}
-.c-classic .foot{
-  position:absolute;left:0;right:0;bottom:0;height:9mm;
-  background:var(--band-tint);border-top:.2mm solid var(--band-line);
-  display:flex;flex-direction:column;justify-content:center;gap:.35mm;padding:0 3.2mm .8mm;
-  print-color-adjust:exact;-webkit-print-color-adjust:exact;
-}
-.c-classic .foot .isslogo{height:5mm;margin-right:1.5mm}
+
+.c-classic .isslogo{height:5mm;margin-right:1.5mm}
 .c-classic .orgline{position:relative;display:flex;align-items:center;width:max-content}
 .c-classic .orgline .seal{
   position:absolute;left:100%;top:50%;
@@ -915,7 +912,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       name:"어울림연합회원증", sub:"OULLIM FOOTBALL UNION", band:"#0058a3", style:"classic",
       org:"어울림축구연합회장인", seal:"어울림연합회장인", url:"http://cafe.naver.com/oullimfc",
       since:"1979", prefix:"", issued:"", logo:"assets/logo-dongnam.png",
-      issuerLogo:"oullim", sealImg:null
+      issuerLogo:"oullim", sealImg:"assets/seal-oullim.png"
     },
     back:[
       "본 회원증은 어울림축구연합회의 회원임을 증명하는 회원증입니다.",
@@ -1189,18 +1186,20 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
         <div class="memno">No. ${esc(memberNo(m))}</div>
         <div class="photo">${photoHTML(m)}</div>
       </div>
-      <dl>
-        <div class="frow"><dt><i><span>성</span><span>명</span></i></dt>
-          <dd>${esc(m.name)||"—"}${m.no?` <span class="jersey">(${esc(m.no)})</span>`:""}</dd></div>
-        <div class="frow"><dt><i><span>생</span><span>년</span><span>월</span><span>일</span></i></dt>
-          <dd class="mono">${esc(b.disp)||"—"}</dd></div>
-        <div class="frow"><dt><i><span>소</span><span>속</span><span>팀</span></i></dt>
-          <dd class="sm">${esc(m.team)||"—"}</dd></div>
-      </dl>
-    </div>
-    <div class="foot">
-      <div class="orgline">${issuerLogoHTML()}<span class="org">${esc(c.org)}</span>${sealHTML()}</div>
-      ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
+      <div class="col">
+        <dl>
+          <div class="frow"><dt><i><span>성</span><span>명</span></i></dt>
+            <dd>${esc(m.name)||"—"}${m.no?` <span class="jersey">(${esc(m.no)})</span>`:""}</dd></div>
+          <div class="frow"><dt><i><span>생</span><span>년</span><span>월</span><span>일</span></i></dt>
+            <dd class="mono">${esc(b.disp)||"—"}</dd></div>
+          <div class="frow"><dt><i><span>소</span><span>속</span><span>팀</span></i></dt>
+            <dd class="sm">${esc(m.team)||"—"}</dd></div>
+        </dl>
+        <div class="issuer">
+          <div class="orgline">${issuerLogoHTML()}<span class="org">${esc(c.org)}</span>${sealHTML()}</div>
+          ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
+        </div>
+      </div>
     </div>
   </div>`;
   }
