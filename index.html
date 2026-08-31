@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>조기축구 회원증 메이커</title>
+<meta name="description" content="조기축구회 회원증을 만들어 A4 한 장에 10장씩 인쇄합니다. 엑셀 명단을 붙여넣고 증명사진만 넣으면 끝. 서버가 없어 회원 정보가 브라우저 밖으로 나가지 않습니다.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1b4f9c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="조기축구 회원증 메이커">
+<meta property="og:description" content="조기축구회 회원증을 만들어 A4 한 장에 10장씩 인쇄합니다. 엑셀 명단을 붙여넣고 증명사진만 넣으면 끝. 서버가 없어 회원 정보가 브라우저 밖으로 나가지 않습니다.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231b4f9c'/%3E%3Crect x='6' y='8' width='20' height='16' rx='2' fill='%23fbfbf9'/%3E%3Crect x='6' y='8' width='20' height='4.5' fill='%23bf421c'/%3E%3Crect x='8.5' y='15' width='6' height='7' rx='1' fill='%23c3c8cd'/%3E%3Crect x='16.5' y='15.5' width='7' height='1.6' fill='%235b6672'/%3E%3Crect x='16.5' y='18.5' width='5' height='1.6' fill='%235b6672'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/fonts.css">
+<style>img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* ═════════════════════════════════════════════
+   토큰
+   ═════════════════════════════════════════════ */
+:root{
+  --ground:#e9edf1;
+  --surface:#ffffff;
+  --surface-2:#f4f7f9;
+  --ink:#131a22;
+  --ink-2:#4a5663;
+  --ink-3:#78848f;
+  --line:#d5dbe1;
+  --line-soft:#e7ebef;
+  --accent:#bf421c;
+  --accent-ink:#ffffff;
+  --accent-soft:#f8e6df;
+  --pitch:#14653f;
+  --shadow:0 1px 2px rgba(19,26,34,.05), 0 10px 28px rgba(19,26,34,.07);
+  --shadow-lg:0 2px 6px rgba(19,26,34,.06), 0 22px 50px rgba(19,26,34,.11);
+  --radius:12px;
+
+  --sans:"IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  --display:"Gothic A1", "Apple SD Gothic Neo", sans-serif;
+  --serif:"Nanum Myeongjo", "Apple SD Gothic Neo", serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0f141a;
+    --surface:#191f27;
+    --surface-2:#141a21;
+    --ink:#e9eef3;
+    --ink-2:#a6b2bf;
+    --ink-3:#73818f;
+    --line:#2b343f;
+    --line-soft:#222a33;
+    --accent:#e56a41;
+    --accent-ink:#1c1006;
+    --accent-soft:#372012;
+    --pitch:#42a877;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.35);
+    --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 24px 54px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0f141a;
+  --surface:#191f27;
+  --surface-2:#141a21;
+  --ink:#e9eef3;
+  --ink-2:#a6b2bf;
+  --ink-3:#73818f;
+  --line:#2b343f;
+  --line-soft:#222a33;
+  --accent:#e56a41;
+  --accent-ink:#1c1006;
+  --accent-soft:#372012;
+  --pitch:#42a877;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 28px rgba(0,0,0,.35);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 24px 54px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+body{
+  --sheetscale:.62;
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:var(--sans);font-size:14px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px}
+
+/* ═════════════════════════════════════════════
+   앱 셸
+   ═════════════════════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:13px 26px;
+  background:color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topbar::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--accent) 22%, transparent 22%);
+  opacity:.85;
+}
+.brand{display:flex;align-items:baseline;gap:11px;margin-right:auto;min-width:0}
+.brand h1{font-size:17px;font-weight:900;letter-spacing:-.025em;white-space:nowrap}
+.brand .tag{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap;
+}
+.saved{font-size:12px;color:var(--ink-3);font-family:var(--mono);transition:color .2s}
+.saved.on{color:var(--pitch)}
+.saved.warn{color:var(--accent);font-weight:600}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 15px;border-radius:9px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);
+  font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background .14s, border-color .14s, transform .07s, box-shadow .14s;
+}
+.btn:hover{background:var(--surface-2);border-color:var(--ink-3)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{
+  background:var(--accent);border-color:var(--accent);color:var(--accent-ink);
+  box-shadow:0 1px 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.btn.primary:hover{filter:brightness(1.07);border-color:var(--accent)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:7px}
+.btn.danger:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+
+.wrap{max-width:1300px;margin:0 auto;padding:26px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,392px);gap:26px;align-items:start}
+@media (max-width:1040px){.cols{grid-template-columns:1fr}.preview-col{position:static !important}}
+
+.panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  margin-bottom:22px;
+  overflow:hidden;
+}
+.panel > header{
+  display:flex;align-items:center;gap:11px;
+  padding:15px 19px;border-bottom:1px solid var(--line-soft);
+}
+.panel > header h2{font-size:14.5px;font-weight:700}
+.panel > header .hint{margin-left:auto;font-size:12px;color:var(--ink-3);text-align:right}
+.panel .body{padding:19px}
+
+.step{
+  flex:0 0 auto;width:23px;height:23px;border-radius:7px;
+  display:grid;place-items:center;
+  background:var(--ink);color:var(--surface);
+  font-family:var(--mono);font-size:11px;font-weight:600;
+}
+
+/* 폼 */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:15px}
+.field:last-child{margin-bottom:0}
+.field > label{font-size:12px;font-weight:600;color:var(--ink-2)}
+.field .note{font-size:11.5px;color:var(--ink-3);line-height:1.5;word-break:keep-all}
+.field .note b{color:var(--ink-2);font-weight:600}
+input[type=text],textarea{
+  width:100%;padding:9px 11px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  transition:border-color .14s, background .14s;
+}
+input[type=text]:hover,textarea:hover{border-color:var(--ink-3)}
+input[type=text]:focus,textarea:focus{background:var(--surface);border-color:var(--accent);outline:none}
+textarea{resize:vertical;line-height:1.7}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{
+  width:27px;height:27px;border-radius:50%;padding:0;cursor:pointer;
+  border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);
+  transition:box-shadow .14s, transform .1s;
+}
+.sw:hover{transform:scale(1.08)}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+input[type=color]{width:36px;height:29px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer}
+.check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);cursor:pointer;user-select:none}
+
+/* 스타일 고르기 */
+.stylepick{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+@media (max-width:620px){.stylepick{grid-template-columns:1fr}}
+.styleopt{
+  display:flex;flex-direction:column;gap:0;padding:0;cursor:pointer;text-align:left;
+  background:var(--surface-2);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;
+  transition:border-color .14s, box-shadow .14s, transform .1s;
+}
+.styleopt:hover{border-color:var(--ink-3);transform:translateY(-2px)}
+.styleopt[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.styleopt .mini{
+  height:97px;overflow:hidden;position:relative;
+  background:var(--surface);border-bottom:1px solid var(--line-soft);
+  display:grid;place-items:center;
+}
+.styleopt .mini > div{transform:scale(.425);transform-origin:center;flex:0 0 auto}
+.styleopt .cap{padding:8px 11px;display:flex;flex-direction:column;gap:1px}
+.styleopt .cap b{font-family:var(--display);font-size:12.5px;font-weight:700}
+.styleopt .cap span{font-size:10.5px;color:var(--ink-3);line-height:1.4}
+
+/* 미리보기 */
+.preview-col{position:sticky;top:80px}
+.stage{
+  position:relative;padding:26px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--surface) 100%, transparent) 0%, var(--surface-2) 100%);
+}
+.stage::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(var(--line-soft) 1px, transparent 1px),
+                   linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size:22px 22px;
+  mask-image:radial-gradient(80% 70% at 50% 45%, #000 20%, transparent 100%);
+}
+.stage-label{
+  position:relative;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);align-self:flex-start;margin-top:6px;
+}
+.stage-label:first-child{margin-top:0}
+.stage .cardslot{position:relative}
+.flipnav{
+  display:flex;gap:7px;align-items:center;
+  padding:12px 19px;border-top:1px solid var(--line-soft);background:var(--surface-2);
+}
+.who{
+  margin-left:auto;font-size:12px;color:var(--ink-2);
+  max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.who b{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:500}
+
+/* ═════════════════════════════════════════════
+   회원증 카드 — 실물 86 × 54 mm
+   ═════════════════════════════════════════════ */
+.idcard{
+  position:relative;
+  width:86mm;height:54mm;
+  background:#fcfcfa;color:#12161b;
+  font-family:var(--sans);
+  overflow:hidden;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.cardslot .idcard, .styleopt .idcard{border-radius:3.1mm}
+.cardslot .idcard{box-shadow:0 2px 5px rgba(0,0,0,.16), 0 16px 38px rgba(0,0,0,.19)}
+.punch{
+  position:absolute;width:4.6mm;height:4.6mm;border-radius:50%;
+  border:.32mm dashed #c0392b;opacity:.75;z-index:5;
+}
+
+/* ── 공통 부품 ─────────────────────────── */
+.photo{
+  background:#e9eae6;overflow:hidden;flex:0 0 auto;
+  display:grid;place-items:center;
+}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo .ph{
+  font-size:2.3mm;color:#a0a6ac;text-align:center;line-height:1.5;letter-spacing:.02em;
+}
+.memno{font-family:var(--mono);font-size:2.05mm;line-height:1.2;letter-spacing:-.02em;white-space:nowrap}
+.seal{
+  flex:0 0 auto;border-radius:50%;
+  display:grid;place-items:center;text-align:center;
+  border:.42mm solid #bd3a2b;color:#bd3a2b;
+  transform:rotate(-7deg);
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.seal span{
+  font-family:var(--display);font-weight:700;font-size:2.45mm;line-height:1.05;
+  letter-spacing:-.03em;padding:0 .7mm;word-break:keep-all;
+}
+.emblem{display:grid;place-items:center}
+.emblem img{width:100%;height:100%;object-fit:contain}
+.emblem svg{width:100%;height:100%;display:block}
+
+/* ── 스타일 A · 정통 ───────────────────── */
+.c-classic .band{
+  height:10.4mm;display:grid;place-items:center;
+  background:var(--band);color:#fff;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.c-classic .band span{
+  font-family:var(--display);font-weight:900;font-size:5.3mm;line-height:1;
+  letter-spacing:.26em;text-indent:.26em;white-space:nowrap;
+}
+.c-classic .band.l2 span{font-size:4.3mm;letter-spacing:.13em;text-indent:.13em}
+.c-classic .band.l3 span{font-size:3.5mm;letter-spacing:.06em;text-indent:.06em}
+.c-classic .rule{height:.7mm;background:var(--band-deep);print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.c-classic .plate{position:relative;height:42.9mm;padding:2.4mm 3.2mm 0}
+.c-classic .wm{
+  position:absolute;right:2.4mm;top:.4mm;width:30mm;height:30mm;
+  opacity:.11;pointer-events:none;
+}
+.c-classic .main{position:relative;display:flex;gap:3.4mm}
+.c-classic .pblock{display:flex;flex-direction:column;gap:.9mm;width:21.5mm}
+.c-classic .memno{color:#3a444f}
+.c-classic .photo{width:21.5mm;height:27.4mm;border:.22mm solid #c6cac4}
+.c-classic dl{margin:0;flex:1;display:flex;flex-direction:column;gap:1.5mm;padding-top:2.6mm;min-width:0}
+.c-classic .frow{
+  display:grid;grid-template-columns:15.5mm 1fr;align-items:baseline;gap:1.6mm;
+  padding-bottom:.9mm;border-bottom:.15mm solid rgba(18,22,27,.13);
+}
+.c-classic .frow:last-child{border-bottom:none}
+.c-classic dt{
+  font-family:var(--display);font-weight:700;font-size:3.4mm;color:#232b34;
+  display:flex;align-items:baseline;gap:.7mm;
+}
+.c-classic dt i{flex:1;display:flex;justify-content:space-between;font-style:normal}
+.c-classic dt::after{content:":";opacity:.65}
+.c-classic dd{
+  margin:0;font-family:var(--display);font-weight:700;font-size:4.5mm;line-height:1.1;color:#0d1218;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.c-classic dd .jersey{font-size:3.1mm;color:#46525f}
+.c-classic dd.mono{font-family:var(--mono);font-weight:600;font-size:4.1mm;letter-spacing:-.03em}
+.c-classic dd.sm{font-size:3.9mm;font-weight:500}
+.c-classic .foot{
+  position:absolute;left:0;right:0;bottom:0;height:9mm;
+  background:var(--band-tint);border-top:.2mm solid var(--band-line);
+  display:flex;align-items:center;gap:2mm;padding:0 3.2mm;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.c-classic .foot .issuer{display:flex;flex-direction:column;gap:.3mm;min-width:0}
+.c-classic .org{font-family:var(--display);font-weight:700;font-size:3mm;line-height:1.2;color:#1a222b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-classic .url{font-family:var(--mono);font-size:2.15mm;color:#54606c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-classic .seal{width:10.6mm;height:10.6mm;margin-left:auto;align-self:flex-end;margin-bottom:.7mm;background:rgba(255,255,255,.6)}
+
+/* ── 스타일 B · 모던 ───────────────────── */
+.c-modern{background:#fff}
+.c-modern .side{
+  position:absolute;left:0;top:0;bottom:0;width:34mm;
+  background:linear-gradient(160deg, var(--band-lite) 0%, var(--band) 55%, var(--band-deep) 100%);
+  clip-path:polygon(0 0, 100% 0, 87% 100%, 0 100%);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1.7mm;
+  padding:3mm 5mm 3mm 3.2mm;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.c-modern .photo{width:22mm;height:28mm;border:.6mm solid rgba(255,255,255,.9);border-radius:.8mm}
+.c-modern .side .memno{color:rgba(255,255,255,.92);font-size:1.95mm}
+.c-modern .side .wm{position:absolute;left:1.5mm;bottom:1.5mm;width:9mm;height:9mm;opacity:.22;filter:grayscale(1) brightness(3)}
+.c-modern .main{position:absolute;left:34mm;right:0;top:0;bottom:0;padding:3.6mm 3.6mm 3mm}
+.c-modern .kicker{
+  display:flex;align-items:center;gap:1.4mm;
+  font-family:var(--display);font-weight:700;font-size:2.6mm;line-height:1;
+  letter-spacing:.14em;color:var(--band-deep);white-space:nowrap;overflow:hidden;
+}
+.c-modern .kicker::after{content:"";flex:1;height:.25mm;background:var(--band-line);min-width:2mm}
+.c-modern .jersey{
+  position:absolute;right:2.6mm;top:6.4mm;
+  font-family:var(--display);font-weight:900;font-size:15mm;line-height:.8;
+  color:var(--band);opacity:.13;letter-spacing:-.05em;pointer-events:none;
+}
+.c-modern .nm{
+  margin-top:2.4mm;
+  font-family:var(--display);font-weight:900;font-size:7mm;line-height:1;letter-spacing:-.03em;
+  color:#101820;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;
+}
+.c-modern .sub{
+  margin-top:.9mm;font-family:var(--mono);font-size:2.2mm;color:#6a7683;letter-spacing:.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;
+}
+.c-modern .meta{position:absolute;left:3.6mm;bottom:13.4mm;right:3.6mm;display:flex;flex-direction:column;gap:1.3mm}
+.c-modern .mrow{display:grid;grid-template-columns:11mm 1fr;align-items:baseline;gap:1.4mm}
+.c-modern .mrow b{
+  font-family:var(--mono);font-weight:500;font-size:1.95mm;letter-spacing:.06em;
+  color:#8b96a1;text-transform:uppercase;
+}
+.c-modern .mrow span{
+  font-family:var(--display);font-weight:700;font-size:3.3mm;color:#18202a;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.c-modern .foot{
+  position:absolute;left:3.6mm;right:3.6mm;bottom:2.8mm;
+  display:flex;align-items:flex-end;gap:1.6mm;
+  border-top:.2mm solid #e0e4e8;padding-top:1.5mm;
+}
+.c-modern .org{font-family:var(--display);font-weight:700;font-size:2.7mm;line-height:1.2;color:#222a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-modern .url{font-family:var(--mono);font-size:2mm;color:#77828d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-modern .seal{width:8.6mm;height:8.6mm;margin-left:auto;margin-bottom:-.6mm}
+
+/* ── 스타일 C · 크레스트 ───────────────── */
+.c-crest{background:#fdfdfb}
+.c-crest .head{display:flex;align-items:center;gap:2.6mm;padding:2.4mm 3.4mm 0}
+.c-crest .head .emblem{width:11mm;height:11mm;flex:0 0 auto}
+.c-crest .titles{min-width:0;display:flex;flex-direction:column;gap:.5mm}
+.c-crest .titles .t1{
+  font-family:var(--serif);font-weight:800;font-size:5mm;line-height:1.05;color:#111820;
+  letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.c-crest .titles .t1.l2{font-size:4.2mm}
+.c-crest .titles .t1.l3{font-size:3.5mm}
+.c-crest .titles .t2{
+  font-family:var(--mono);font-size:2.05mm;letter-spacing:.2em;color:var(--band-deep);
+  text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.c-crest .dbl{margin:2mm 3.4mm 0;height:.9mm;border-top:.45mm solid var(--band);border-bottom:.15mm solid var(--band-line);print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.c-crest .main{
+  display:flex;align-items:flex-end;gap:2.6mm;
+  padding:2.2mm 3.4mm 0;height:28.3mm;
+}
+.c-crest dl{margin:0;flex:1;display:flex;flex-direction:column;gap:1.4mm;min-width:0;padding-bottom:.6mm}
+.c-crest .frow{display:flex;flex-direction:column;gap:.15mm;min-width:0}
+.c-crest dt{
+  font-family:var(--mono);font-size:1.9mm;letter-spacing:.12em;color:#8d98a3;text-transform:uppercase;
+}
+.c-crest dd{
+  margin:0;font-family:var(--display);font-weight:700;font-size:4.3mm;line-height:1.15;color:#0f151c;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.c-crest dd .jersey{font-size:3mm;color:#4c5865}
+.c-crest dd.mono{font-family:var(--mono);font-weight:600;font-size:3.7mm;letter-spacing:-.03em}
+.c-crest dd.sm{font-size:3.5mm;font-weight:500}
+.c-crest .seal{width:10.4mm;height:10.4mm;margin-bottom:.4mm}
+.c-crest .pblock{display:flex;flex-direction:column;gap:.8mm;align-items:center;width:21mm}
+.c-crest .photo{width:21mm;height:25mm;border:.22mm solid #c9cdc7}
+.c-crest .memno{color:#5b666f;font-size:1.85mm}
+.c-crest .foot{
+  position:absolute;left:0;right:0;bottom:0;height:7.2mm;
+  background:var(--band);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;gap:2mm;padding:0 3.4mm;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.c-crest .org{font-family:var(--display);font-weight:700;font-size:2.8mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-crest .url{font-family:var(--mono);font-size:2.05mm;color:rgba(255,255,255,.88);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── 뒷면 (공통) ───────────────────────── */
+.idcard.back{background:#fcfcfa;display:flex;flex-direction:column}
+.back .topbar2{
+  height:6.4mm;flex:0 0 auto;background:var(--band);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;padding:0 3.6mm;gap:2mm;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.back .topbar2 .n{
+  font-family:var(--display);font-weight:700;font-size:2.7mm;letter-spacing:.1em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.back .topbar2 .k{font-family:var(--mono);font-size:1.9mm;letter-spacing:.18em;color:rgba(255,255,255,.85);white-space:nowrap}
+.back .wm{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:34mm;height:34mm;opacity:.1;pointer-events:none}
+.back .notes{
+  position:relative;list-style:none;margin:0;padding:0 5mm;
+  flex:1;display:flex;flex-direction:column;justify-content:center;gap:3mm;
+}
+.back .notes li{
+  position:relative;padding-left:3.6mm;
+  font-size:3mm;line-height:1.45;color:#131a21;word-break:keep-all;
+}
+.back .notes li::before{
+  content:"";position:absolute;left:0;top:1.35mm;width:2.2mm;height:.3mm;background:var(--band);
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.back .bfoot{
+  position:relative;flex:0 0 auto;margin:0 5mm 3.4mm;padding-top:1.8mm;
+  border-top:.18mm solid #dcdfda;
+  display:flex;justify-content:space-between;gap:2mm;
+  font-family:var(--mono);font-size:2.05mm;color:#5e6a75;
+}
+
+/* ═════════════════════════════════════════════
+   명단 표
+   ═════════════════════════════════════════════ */
+.paste{width:100%;min-height:78px;font-family:var(--mono);font-size:12px}
+.tablewrap{overflow-x:auto;border-top:1px solid var(--line-soft)}
+table{border-collapse:collapse;width:100%;min-width:740px}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+th{
+  font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);background:var(--surface-2);position:sticky;top:0;z-index:2;
+}
+td input[type=text]{padding:6px 8px;border-color:transparent;background:transparent}
+td input[type=text]:hover{border-color:var(--line);background:var(--surface-2)}
+td input[type=text]:focus{border-color:var(--accent);background:var(--surface)}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr.sel{background:var(--accent-soft)}
+tbody tr.sel .idx{color:var(--accent);font-weight:600}
+.idx{font-family:var(--mono);font-size:12px;color:var(--ink-3);width:36px;text-align:right}
+.thumb{
+  width:36px;height:46px;border-radius:5px;border:1px dashed var(--line);
+  background:var(--surface-2);overflow:hidden;display:grid;place-items:center;cursor:pointer;
+  transition:border-color .14s;
+}
+.thumb:hover{border-color:var(--accent)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb span{font-size:15px;color:var(--ink-3);line-height:1}
+.thumb.has{border-style:solid;border-color:var(--pitch)}
+.empty{padding:36px 19px;text-align:center;color:var(--ink-3);font-size:13px}
+.tbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:14px 19px;border-top:1px solid var(--line-soft)}
+.count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+/* 가이드 */
+.spec{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:9px;overflow:hidden;margin-bottom:17px;
+}
+.spec div{background:var(--surface);padding:11px 13px}
+.spec dt{font-size:10.5px;color:var(--ink-3);letter-spacing:.05em}
+.spec dd{margin:2px 0 0;font-family:var(--mono);font-size:13px;font-weight:600}
+.guide ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:13px;counter-reset:g}
+.guide li{
+  position:relative;padding-left:28px;color:var(--ink-2);word-break:keep-all;font-size:13px;line-height:1.62;
+  counter-increment:g;
+}
+.guide li::before{
+  content:counter(g);position:absolute;left:0;top:2px;
+  width:19px;height:19px;border-radius:50%;display:grid;place-items:center;
+  background:var(--accent-soft);color:var(--accent);
+  font-family:var(--mono);font-size:10.5px;font-weight:600;
+}
+.guide li b{color:var(--ink);font-weight:600}
+.callout{
+  display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:9px;
+  background:var(--accent-soft);border:1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  font-size:12.5px;line-height:1.6;color:var(--ink);word-break:keep-all;margin-top:17px;
+}
+.callout b{font-weight:600}
+.callout.quiet{background:var(--surface-2);border-color:var(--line)}
+
+.sitefoot{
+  max-width:1300px;margin:0 auto;padding:4px 26px 40px;
+  display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;
+  font-size:12px;color:var(--ink-3);
+}
+.sitefoot a{color:var(--ink-2)}
+.sitefoot .sep{opacity:.5}
+
+/* ═════════════════════════════════════════════
+   인쇄 배치 — A4 2열 × 5행 = 10장
+   ═════════════════════════════════════════════ */
+.sheets{display:none}
+body.showsheets .sheets{display:flex;flex-direction:column;align-items:center;gap:20px;padding:0 26px 44px;overflow-x:auto}
+.sheetslot{overflow:hidden}
+.sheetbox{width:210mm;transform:scale(var(--sheetscale));transform-origin:top center;box-shadow:var(--shadow-lg)}
+.sheet{
+  width:210mm;height:297mm;background:#fff;padding:8.7mm 17mm;
+  display:grid;grid-template-columns:repeat(2,86mm);grid-template-rows:repeat(5,54mm);
+  column-gap:4mm;row-gap:2.4mm;justify-content:center;align-content:center;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+}
+.slot{position:relative;width:86mm;height:54mm}
+body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
+
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff !important}
+  .topbar,.wrap,.sitefoot{display:none !important}
+  .sheets{display:block !important;padding:0}
+  .sheetbox{transform:none !important;width:auto;box-shadow:none;margin:0}
+  .sheet{page-break-after:always;break-after:page}
+  .sheet:last-child{page-break-after:auto;break-after:auto}
+  .punch{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <h1>조기축구 회원증 메이커</h1>
+    <span class="tag">86 × 54 mm · CR80</span>
+  </div>
+  <span class="saved" id="saved">자동 저장됨</span>
+  <button class="btn" id="btnSheets">인쇄 배치 보기</button>
+  <button class="btn primary" id="btnPrint">인쇄 / PDF 저장</button>
+</div>
+
+<div class="wrap">
+  <div class="cols">
+    <div>
+      <section class="panel">
+        <header><span class="step">1</span><h2>카드 디자인</h2><span class="hint">세 가지 중에 고르세요</span></header>
+        <div class="body">
+          <div class="stylepick" id="stylepick"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><span class="step">2</span><h2>우리 조기회 정보</h2><span class="hint">모든 카드에 공통</span></header>
+        <div class="body">
+          <div class="row2">
+            <div class="field">
+              <label for="fName">조기회 이름</label>
+              <input type="text" id="fName" data-club="name" placeholder="예: 새벽축구연합회">
+              <span class="note">6~8자가 가장 보기 좋습니다. 길면 자동으로 작아집니다.</span>
+            </div>
+            <div class="field">
+              <label for="fSub">영문 이름 / 부제</label>
+              <input type="text" id="fSub" data-club="sub" placeholder="SAEBYEOK FOOTBALL UNION">
+              <span class="note">모던·크레스트 스타일에 표시됩니다.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>테마 색</label>
+            <div class="swatches" id="swatches">
+              <input type="color" id="fBand" data-club="band" aria-label="테마 색 직접 선택">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="fOrg">발급 기관 표기</label>
+              <input type="text" id="fOrg" data-club="org" placeholder="새벽축구연합회장 인">
+            </div>
+            <div class="field">
+              <label for="fSeal">직인 글자</label>
+              <input type="text" id="fSeal" data-club="seal" placeholder="새벽회장인" maxlength="8">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="fUrl">밴드 / 카페 주소</label>
+              <input type="text" id="fUrl" data-club="url" placeholder="band.us/@ourfc">
+            </div>
+            <div class="field">
+              <label for="fSince">창단 연도</label>
+              <input type="text" id="fSince" data-club="since" placeholder="2015" maxlength="4">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="fPrefix">회원번호 앞자리</label>
+              <input type="text" id="fPrefix" data-club="prefix" placeholder="비우면 소속팀 이름 사용">
+              <span class="note">회원번호는 <b>앞자리-생년월일</b>로 자동 생성됩니다.</span>
+            </div>
+            <div class="field">
+              <label for="fIssued">발급일</label>
+              <input type="text" id="fIssued" data-club="issued" placeholder="2026.09.01">
+              <span class="note">뒷면 아래쪽에 들어갑니다.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>엠블럼 / 로고 <span style="font-weight:400;color:var(--ink-3)">— 선택</span></label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn sm" id="btnLogo">이미지 선택</button>
+              <button class="btn sm ghost" id="btnLogoClear">지우기</button>
+              <span class="note" id="logoState">없으면 창단 연도 도장 문양이 들어갑니다</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><span class="step">3</span><h2>뒷면 유의사항</h2><span class="hint">한 줄에 하나씩</span></header>
+        <div class="body">
+          <div class="field">
+            <textarea id="fBack" rows="4" placeholder="한 줄에 한 항목씩"></textarea>
+            <span class="note">3줄이 가장 잘 맞습니다. 넘기면 글자가 자동으로 작아집니다.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><span class="step">4</span><h2>회원 명단</h2><span class="hint">엑셀에서 복사 → 붙여넣기</span></header>
+        <div class="body" style="padding-bottom:15px">
+          <div class="field">
+            <label for="fPaste">엑셀 붙여넣기</label>
+            <textarea class="paste" id="fPaste" placeholder="이름	등번호	생년월일	소속팀
+정경호	14	1967-11-14	새벽FC
+김민수	7	1982.03.21	새벽FC"></textarea>
+            <span class="note">첫 줄이 <b>이름 / 등번호 / 생년월일 / 소속팀</b> 머리글이면 알아서 인식하고, 머리글이 없으면 왼쪽부터 그 순서로 읽습니다.</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn primary sm" id="btnParse">명단 불러오기</button>
+            <button class="btn sm" id="btnParseAdd">기존 명단에 추가</button>
+            <button class="btn sm ghost" id="btnSample">예시로 채워보기</button>
+          </div>
+        </div>
+        <div class="tablewrap">
+          <table>
+            <thead><tr>
+              <th class="idx">#</th><th style="width:54px">사진</th><th>이름</th>
+              <th style="width:76px">등번호</th><th style="width:132px">생년월일</th>
+              <th>소속팀 / 포지션</th><th style="width:46px"></th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="emptyMsg">아직 회원이 없습니다. 위에 명단을 붙여넣거나 <b>회원 추가</b>를 눌러 시작하세요.</div>
+        </div>
+        <div class="tbar">
+          <button class="btn sm" id="btnAdd">＋ 회원 추가</button>
+          <button class="btn sm" id="btnExport">백업 파일 저장</button>
+          <button class="btn sm" id="btnImport">백업 불러오기</button>
+          <button class="btn sm danger" id="btnClearAll">명단 비우기</button>
+          <span class="count" id="count">0명 · A4 0장</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="preview-col">
+      <section class="panel">
+        <header><h2>미리보기</h2><span class="hint">실제 크기</span></header>
+        <div class="stage">
+          <span class="stage-label">앞면 · Front</span>
+          <div class="cardslot" id="frontMount"></div>
+          <span class="stage-label">뒷면 · Back</span>
+          <div class="cardslot" id="backMount"></div>
+        </div>
+        <div class="flipnav">
+          <button class="btn sm" id="prevM" aria-label="이전 회원">◀</button>
+          <button class="btn sm" id="nextM" aria-label="다음 회원">▶</button>
+          <label class="check" style="margin-left:6px"><input type="checkbox" id="cbPunch" checked> 펀칭 위치</label>
+          <span class="who" id="who">예시 카드</span>
+        </div>
+      </section>
+
+      <section class="panel guide">
+        <header><span class="step">5</span><h2>인쇄해서 만드는 법</h2></header>
+        <div class="body">
+          <div class="spec">
+            <div><dt>카드 규격</dt><dd>86 × 54</dd></div>
+            <div><dt>배치</dt><dd>A4 10장</dd></div>
+            <div><dt>인쇄 배율</dt><dd>100%</dd></div>
+            <div><dt>권장 용지</dt><dd>120g↑</dd></div>
+          </div>
+          <ol>
+            <li><b>앞면을 인쇄합니다.</b> 인쇄 창에서 배율 <b>100%(실제 크기)</b>, 여백 <b>없음</b>, <b>배경 그래픽</b> 켜기 — 이 셋 중 하나라도 틀리면 카드 크기가 달라집니다.</li>
+            <li><b>같은 종이를 뒤집어 뒷면을 인쇄합니다.</b> 뒷면 페이지는 좌우가 미리 뒤집혀 있어 그대로 넣으면 앞뒤가 맞습니다. 먼저 한 장만 시험 인쇄해 보세요.</li>
+            <li><b>재단선대로 자릅니다.</b> 커터칼과 철자를 쓰면 가장 깔끔하고, 모서리는 5mm 라운드 펀치로 다듬으면 완성도가 확 올라갑니다.</li>
+            <li><b>카드용 라미네이팅 파우치(60 × 90 mm)에 코팅합니다.</b> 카드보다 파우치가 커야 가장자리가 밀봉됩니다. 남는 투명 테두리는 2~3mm 남기고 자릅니다.</li>
+            <li><b>목걸이 구멍을 뚫습니다.</b> 미리보기의 붉은 점선 자리(코팅 테두리 안쪽)에 펀치로 뚫고 고리를 끼우면 완성입니다.</li>
+          </ol>
+          <div class="callout">
+            <b>잉크가 걱정된다면 정통 스타일</b>
+            <span>모던 스타일은 색이 넓게 깔려서 가정용 잉크젯에서 번지거나 잉크를 많이 씁니다. 잉크젯이면 정통 스타일이, 레이저나 인쇄소 출력이면 모던·크레스트가 잘 나옵니다.</span>
+          </div>
+          <div class="callout quiet">
+            <b>사진은 가로 500px 이상으로</b>
+            <span>화면에서 선명해 보여도 인쇄하면 뭉개집니다. 얼굴이 가운데 오도록 3:4로 자동 크롭됩니다.</span>
+          </div>
+          <div class="callout quiet">
+            <b>크롬에서 인쇄하세요</b>
+            <span>배율과 여백을 가장 정확하게 다룹니다. 사파리는 여백 옵션이 달라 카드가 몇 mm씩 틀어질 수 있고, 휴대폰에서는 A4 배치가 제대로 나오지 않습니다.</span>
+          </div>
+          <div class="callout quiet">
+            <b>명단은 이 브라우저에만 저장됩니다</b>
+            <span>서버가 없어서 회원 이름·생년월일·사진이 <b>이 컴퓨터 밖으로 나가지 않습니다.</b> 대신 브라우저를 바꾸거나 방문 기록을 지우면 사라지니, 명단을 다 채우면 <b>백업 파일 저장</b>을 한 번 눌러 두세요.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="sitefoot">
+  <span>회원 정보는 서버로 전송되지 않고 이 브라우저 안에만 저장됩니다.</span>
+  <span class="sep">·</span>
+  <span>인쇄는 크롬 권장</span>
+  <span class="sep">·</span>
+  <a href="https://github.com/simhyeoncheol/soccer-id-card">소스 보기</a>
+</footer>
+
+<div class="sheets" id="sheets"></div>
+<input type="file" id="filePhoto" accept="image/*" hidden>
+<input type="file" id="fileLogo" accept="image/*" hidden>
+<input type="file" id="fileBackup" accept="application/json,.json" hidden>
+
+<script>
+(function(){
+  "use strict";
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const KEY = "oullim-idcard-v1";
+
+  const BANDS = ["#1b4f9c","#123f6d","#0f6b52","#8c1c2b","#2f333b","#a85a17"];
+  const STYLES = [
+    {id:"classic", name:"정통",   desc:"기존 회원증 그대로. 잉크젯에 가장 안전합니다."},
+    {id:"modern",  name:"모던",   desc:"사선 컬러 패널에 등번호를 크게. 레이저 출력용."},
+    {id:"crest",   name:"크레스트", desc:"엠블럼을 앞세운 격식 있는 명조 편성."}
+  ];
+
+  const DEFAULT = {
+    club:{
+      name:"우리조기축구회", sub:"", band:"#1b4f9c", style:"classic",
+      org:"우리조기축구회장 인", seal:"회장인", url:"",
+      since:String(new Date().getFullYear()), prefix:"", issued:"", logo:null
+    },
+    back:[
+      "본 회원증은 우리조기축구회의 회원임을 증명하는 회원증입니다.",
+      "본 회원증은 본인만 사용할 수 있으며, 타인에게 양도/대여할 수 없습니다.",
+      "회원증 분실이나 양도 시 발생한 문제에 대한 책임은 본인에게 있습니다."
+    ],
+    members:[]
+  };
+
+  let state = structuredClone(DEFAULT), cursor = 0, uid = 0, svgSeq = 0;
+
+  /* ── 저장소 · IndexedDB 우선, 막히면 localStorage ────────────
+     사진까지 담아야 해서 5MB 한도가 있는 localStorage 로는 부족하다.
+     IndexedDB 는 사실상 한도가 없고, 예전 localStorage 데이터는
+     처음 실행될 때 한 번 옮겨온다. 어느 쪽이든 데이터는 이 브라우저
+     안에만 남고 서버로 나가지 않는다. */
+  const DB = (()=>{
+    const NAME="soccer-idcard", STORE="kv", K="state";
+    let opened=null;
+    function open(){
+      if(opened) return opened;
+      opened = new Promise((res,rej)=>{
+        let r;
+        try{ r = indexedDB.open(NAME,1); }catch(e){ return rej(e); }
+        r.onupgradeneeded=()=>{
+          const db=r.result;
+          if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+        };
+        r.onsuccess=()=>res(r.result);
+        r.onerror=()=>rej(r.error||new Error("indexedDB open failed"));
+        r.onblocked=()=>rej(new Error("indexedDB blocked"));
+      });
+      return opened;
+    }
+    const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{
+      const q=fn(db.transaction(STORE,mode).objectStore(STORE));
+      q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+    }));
+    return {
+      available: (typeof indexedDB!=="undefined" && indexedDB!==null),
+      get: ()=>tx("readonly", s=>s.get(K)),
+      set: v=>tx("readwrite", s=>s.put(v,K))
+    };
+  })();
+
+  function normalize(p){
+    if(!p || typeof p!=="object") return structuredClone(DEFAULT);
+    return {
+      club: Object.assign({}, DEFAULT.club, p.club||{}),
+      back: (Array.isArray(p.back)&&p.back.length) ? p.back.map(x=>String(x==null?"":x)) : DEFAULT.back.slice(),
+      members: Array.isArray(p.members) ? p.members.filter(m=>m&&typeof m==="object").map(m=>({
+        id:++uid,
+        name:String(m.name||""), no:String(m.no||""),
+        birth:String(m.birth||""), team:String(m.team||""),
+        photo:(typeof m.photo==="string" && m.photo.startsWith("data:image/")) ? m.photo : null
+      })) : []
+    };
+  }
+
+  let useIDB = DB.available;
+  async function loadState(){
+    if(useIDB){
+      try{
+        const v = await DB.get();
+        if(v) return normalize(v);
+      }catch(e){ useIDB=false; }
+    }
+    let legacy=null;
+    try{ legacy = JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){}
+    const st = normalize(legacy);
+    if(legacy && useIDB){
+      try{ await DB.set(st); localStorage.removeItem(KEY); }catch(e){}
+    }
+    return st;
+  }
+
+  function setSaved(msg, good){
+    const el=$("#saved");
+    el.textContent=msg;
+    el.classList.toggle("on", !!good);
+    el.classList.toggle("warn", !good);
+    if(good) setTimeout(()=>el.classList.remove("on"), 1200);
+  }
+  let saveTimer=null;
+  function save(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async ()=>{
+      if(useIDB){
+        try{ await DB.set(state); setSaved("자동 저장됨", true); return; }
+        catch(e){ useIDB=false; }
+      }
+      try{
+        localStorage.setItem(KEY, JSON.stringify(state));
+        setSaved("자동 저장됨 · 임시 저장소", true);
+      }catch(e){
+        setSaved("저장 실패 — 백업 파일로 내려받으세요", false);
+      }
+    }, 350);
+  }
+
+  /* ── 백업 · 복원 ─────────────────────────────────────────── */
+  function stamp(){
+    const d=new Date(), p=n=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+  }
+  function exportBackup(){
+    const payload = {
+      app:"soccer-idcard", v:1, savedAt:new Date().toISOString(),
+      club:state.club, back:state.back,
+      members:state.members.map(({id,...m})=>m)
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:"application/json"}));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(state.club.name||"회원증").replace(/[\\/:*?"<>|\s]/g,"_")}_회원증_${stamp()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+    setSaved(`백업 파일을 내려받았습니다 · ${state.members.length}명`, true);
+  }
+  function importBackup(file){
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      let p;
+      try{ p = JSON.parse(fr.result); }
+      catch(e){ setSaved("백업 파일을 읽지 못했습니다", false); return; }
+      if(!p || typeof p!=="object" || (!p.club && !p.members)){
+        setSaved("이 도구의 백업 파일이 아닙니다", false); return;
+      }
+      const n = Array.isArray(p.members) ? p.members.length : 0;
+      if(state.members.length && !confirm(`지금 입력된 ${state.members.length}명을 백업 파일의 ${n}명으로 바꿉니다. 계속할까요?`)) return;
+      state = normalize(p);
+      cursor = 0;
+      hydrate(); renderTable(); renderAll(); save();
+      setSaved(`백업을 불러왔습니다 · ${n}명`, true);
+    };
+    fr.onerror = ()=>setSaved("백업 파일을 읽지 못했습니다", false);
+    fr.readAsText(file);
+  }
+
+  /* ── 값 다듬기 ─────────────────────────── */
+  function normBirth(v){
+    if(!v) return {disp:"", dash:""};
+    const d = String(v).replace(/[^0-9]/g,"");
+    let y,m,dd;
+    if(d.length===8){ y=d.slice(2,4); m=d.slice(4,6); dd=d.slice(6,8); }
+    else if(d.length===6){ y=d.slice(0,2); m=d.slice(2,4); dd=d.slice(4,6); }
+    else { const t=String(v).trim(); return {disp:t, dash:t.replace(/[.\/\s]/g,"-")}; }
+    return {disp:`${y}.${m}.${dd}`, dash:`${y}-${m}-${dd}`};
+  }
+  function memberNo(m){
+    const pre = (state.club.prefix||"").trim() || (m.team||"").trim() || (state.club.name||"").trim();
+    return [pre, normBirth(m.birth).dash].filter(Boolean).join("-");
+  }
+  const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  /* ── 색 섞기 ───────────────────────────── */
+  function toRGB(h){
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(h||"").trim());
+    return m ? [parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)] : [27,79,156];
+  }
+  function mix(hex, target, amt){
+    const a = toRGB(hex), b = toRGB(target);
+    const c = a.map((v,i)=>Math.round(v+(b[i]-v)*amt));
+    return "#"+c.map(v=>v.toString(16).padStart(2,"0")).join("");
+  }
+  function bandVars(){
+    const b = state.club.band || "#1b4f9c";
+    return `--band:${b};--band-deep:${mix(b,"#000",.3)};--band-lite:${mix(b,"#fff",.24)};`
+         + `--band-tint:${mix(b,"#ffffff",.9)};--band-line:${mix(b,"#ffffff",.55)};`;
+  }
+
+  /* ── 엠블럼 ─────────────────────────────── */
+  function emblemHTML(){
+    if(state.club.logo) return `<img src="${state.club.logo}" alt="">`;
+    const id = "e"+(svgSeq++);
+    const top = (state.club.name||"").slice(0,12);
+    const bot = "SINCE " + (state.club.since||"");
+    return `<svg viewBox="0 0 200 200" aria-hidden="true">
+  <defs>
+    <path id="${id}t" d="M100,100 m-76,0 a76,76 0 1,1 152,0 a76,76 0 1,1 -152,0"/>
+    <path id="${id}b" d="M100,100 m-76,0 a76,76 0 1,0 152,0 a76,76 0 1,0 -152,0"/>
+  </defs>
+  <circle cx="100" cy="100" r="89" fill="none" stroke="currentColor" stroke-width="4"/>
+  <circle cx="100" cy="100" r="62" fill="none" stroke="currentColor" stroke-width="2"/>
+  <text font-family="Gothic A1, sans-serif" font-weight="900" font-size="21" fill="currentColor" letter-spacing="4">
+    <textPath href="#${id}t" startOffset="50%" text-anchor="middle">${esc(top)}</textPath></text>
+  <text font-family="IBM Plex Mono, monospace" font-size="16" fill="currentColor" letter-spacing="3">
+    <textPath href="#${id}b" startOffset="50%" text-anchor="middle">${esc(bot)}</textPath></text>
+  <text x="100" y="113" text-anchor="middle" font-family="Gothic A1, sans-serif" font-weight="900"
+        font-size="40" fill="currentColor" letter-spacing="2">F.C</text>
+</svg>`;
+  }
+
+  /* ── 카드 앞면 ─────────────────────────── */
+  function lenClass(s, a, b){ const n=(s||"").length; return n>=b?"l3":(n>=a?"l2":""); }
+  function photoHTML(m){
+    return m.photo ? `<img src="${m.photo}" alt="">` : `<span class="ph">증명사진<br>3 × 4</span>`;
+  }
+  const blank = {name:"",no:"",birth:"",team:"",photo:null};
+
+  function frontHTML(m, opt){
+    m = m || blank; opt = opt||{};
+    const style = STYLES.some(s=>s.id===state.club.style) ? state.club.style : "classic";
+    const inner = style==="modern" ? fModern(m) : style==="crest" ? fCrest(m) : fClassic(m);
+    return `<div class="idcard c-${style}" style="${bandVars()}">${opt.punch?'<div class="punch" style="top:2.6mm;right:3mm"></div>':""}${inner}</div>`;
+  }
+
+  function fClassic(m){
+    const c = state.club, b = normBirth(m.birth);
+    return `
+  <div class="band ${lenClass(c.name,8,11)}"><span>${esc(c.name)}</span></div>
+  <div class="rule"></div>
+  <div class="plate">
+    <div class="wm emblem" style="color:#1a2129">${emblemHTML()}</div>
+    <div class="main">
+      <div class="pblock">
+        <div class="memno">No. ${esc(memberNo(m))}</div>
+        <div class="photo">${photoHTML(m)}</div>
+      </div>
+      <dl>
+        <div class="frow"><dt><i><span>성</span><span>명</span></i></dt>
+          <dd>${esc(m.name)||"—"}${m.no?` <span class="jersey">(${esc(m.no)})</span>`:""}</dd></div>
+        <div class="frow"><dt><i><span>생</span><span>년</span><span>월</span><span>일</span></i></dt>
+          <dd class="mono">${esc(b.disp)||"—"}</dd></div>
+        <div class="frow"><dt><i><span>소</span><span>속</span><span>팀</span></i></dt>
+          <dd class="sm">${esc(m.team)||"—"}</dd></div>
+      </dl>
+    </div>
+    <div class="foot">
+      <div class="issuer">
+        <div class="org">${esc(c.org)}</div>
+        ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
+      </div>
+      ${c.seal?`<div class="seal"><span>${esc(c.seal)}</span></div>`:""}
+    </div>
+  </div>`;
+  }
+
+  function fModern(m){
+    const c = state.club, b = normBirth(m.birth);
+    return `
+  <div class="side">
+    <div class="wm emblem" style="color:#fff">${emblemHTML()}</div>
+    <div class="photo">${photoHTML(m)}</div>
+    <div class="memno">No. ${esc(memberNo(m))}</div>
+  </div>
+  <div class="main">
+    ${m.no?`<div class="jersey">${esc(m.no)}</div>`:""}
+    <div class="kicker">${esc(c.name)}</div>
+    <div class="nm">${esc(m.name)||"—"}</div>
+    <div class="sub">${esc(c.sub||"MEMBERSHIP CARD")}</div>
+    <div class="meta">
+      <div class="mrow"><b>Birth</b><span>${esc(b.disp)||"—"}</span></div>
+      <div class="mrow"><b>Team</b><span>${esc(m.team)||"—"}</span></div>
+    </div>
+    <div class="foot">
+      <div style="min-width:0">
+        <div class="org">${esc(c.org)}</div>
+        ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
+      </div>
+      ${c.seal?`<div class="seal"><span>${esc(c.seal)}</span></div>`:""}
+    </div>
+  </div>`;
+  }
+
+  function fCrest(m){
+    const c = state.club, b = normBirth(m.birth);
+    return `
+  <div class="head">
+    <div class="emblem" style="color:${mix(c.band,'#000',.25)}">${emblemHTML()}</div>
+    <div class="titles">
+      <div class="t1 ${lenClass(c.name,9,12)}">${esc(c.name)}</div>
+      <div class="t2">${esc(c.sub||"MEMBERSHIP CARD")}</div>
+    </div>
+  </div>
+  <div class="dbl"></div>
+  <div class="main">
+    <dl>
+      <div class="frow"><dt>성명 · Name</dt>
+        <dd>${esc(m.name)||"—"}${m.no?` <span class="jersey">(${esc(m.no)})</span>`:""}</dd></div>
+      <div class="frow"><dt>생년월일 · Birth</dt><dd class="mono">${esc(b.disp)||"—"}</dd></div>
+      <div class="frow"><dt>소속팀 · Team</dt><dd class="sm">${esc(m.team)||"—"}</dd></div>
+    </dl>
+    ${c.seal?`<div class="seal"><span>${esc(c.seal)}</span></div>`:""}
+    <div class="pblock">
+      <div class="photo">${photoHTML(m)}</div>
+      <div class="memno">${esc(memberNo(m))}</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="org">${esc(c.org)}</div>
+    ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
+  </div>`;
+  }
+
+  /* ── 카드 뒷면 ─────────────────────────── */
+  function backHTML(opt){
+    opt = opt||{};
+    const c = state.club;
+    const lines = state.back.filter(l=>l.trim());
+    const fs = lines.length>3 ? `font-size:${Math.max(2.15, 3*3/lines.length).toFixed(2)}mm` : "";
+    return `<div class="idcard back" style="${bandVars()}">
+  ${opt.punch?'<div class="punch" style="top:8.6mm;left:3mm"></div>':""}
+  <div class="topbar2">
+    <span class="n">${esc(c.name)}</span>
+    <span class="k">MEMBER</span>
+  </div>
+  <div class="wm emblem" style="color:#1a2129">${emblemHTML()}</div>
+  <ul class="notes">${lines.map(l=>`<li style="${fs}">${esc(l)}</li>`).join("")}</ul>
+  <div class="bfoot">
+    <span>${esc(c.sub||c.name)}</span>
+    <span>${c.issued?"발급 "+esc(c.issued):""}</span>
+  </div>
+</div>`;
+  }
+
+  /* ── 렌더 ──────────────────────────────── */
+  function renderPreview(){
+    const punch = $("#cbPunch").checked;
+    const m = state.members[cursor] || blank;
+    $("#frontMount").innerHTML = frontHTML(m, {punch});
+    $("#backMount").innerHTML  = backHTML({punch});
+    $("#who").innerHTML = state.members.length
+      ? `<b>${cursor+1}/${state.members.length}</b> ${esc(m.name)||"이름 없음"}`
+      : "예시 카드";
+    $$("#tbody tr").forEach((tr,i)=>tr.classList.toggle("sel", i===cursor));
+  }
+
+  function renderStyles(){
+    const sample = state.members[cursor] || {name:"정경호", no:"14", birth:"1967-11-14", team:"새벽FC", photo:null};
+    const keep = state.club.style;
+    $("#stylepick").innerHTML = STYLES.map(s=>{
+      state.club.style = s.id;
+      const mini = frontHTML(sample);
+      return `<div class="styleopt" role="button" tabindex="0" data-style="${s.id}" aria-pressed="${String(s.id===keep)}">
+        <div class="mini">${mini}</div>
+        <div class="cap"><b>${s.name}</b><span>${s.desc}</span></div>
+      </div>`;
+    }).join("");
+    state.club.style = keep;
+  }
+
+  function renderTable(){
+    $("#tbody").innerHTML = state.members.map((m,i)=>`
+      <tr data-i="${i}">
+        <td class="idx">${i+1}</td>
+        <td><div class="thumb${m.photo?" has":""}" data-photo="${i}" title="증명사진 넣기">
+          ${m.photo?`<img src="${m.photo}" alt="">`:`<span>＋</span>`}</div></td>
+        <td><input type="text" value="${esc(m.name)}" data-f="name" placeholder="이름"></td>
+        <td><input type="text" value="${esc(m.no)}" data-f="no" placeholder="－"></td>
+        <td><input type="text" value="${esc(m.birth)}" data-f="birth" placeholder="1967-11-14"></td>
+        <td><input type="text" value="${esc(m.team)}" data-f="team" placeholder="소속팀"></td>
+        <td><button class="btn sm ghost danger" data-del="${i}" title="삭제">✕</button></td>
+      </tr>`).join("");
+    $("#emptyMsg").hidden = state.members.length>0;
+    $("#count").textContent = `${state.members.length}명 · A4 ${Math.ceil(state.members.length/10)||0}장`;
+  }
+
+  function renderSheets(){
+    const per=10, cols=2, ms=state.members;
+    const pages = Math.max(1, Math.ceil(ms.length/per));
+    let html="";
+    for(let p=0;p<pages;p++){
+      const chunk = ms.slice(p*per, p*per+per);
+      let f="";
+      for(let i=0;i<per;i++) f += chunk[i] ? `<div class="slot">${frontHTML(chunk[i])}</div>` : `<div class="slot"></div>`;
+      let b="";
+      for(let r=0;r<per/cols;r++) for(let c=cols-1;c>=0;c--){
+        const i = r*cols+c;
+        b += chunk[i] ? `<div class="slot">${backHTML()}</div>` : `<div class="slot"></div>`;
+      }
+      html += `<div class="sheetslot"><div class="sheetbox"><div class="sheet">${f}</div></div></div>`
+           +  `<div class="sheetslot"><div class="sheetbox"><div class="sheet">${b}</div></div></div>`;
+    }
+    $("#sheets").innerHTML = html;
+    if(document.body.classList.contains("showsheets")) fitSheets();
+  }
+  function fitSheets(){
+    const sc = parseFloat(getComputedStyle(document.body).getPropertyValue("--sheetscale")) || .62;
+    $$("#sheets .sheetslot").forEach(s=>{ s.style.height = (297*3.7795*sc)+"px"; });
+  }
+  function renderAll(){ renderPreview(); renderStyles(); renderSheets(); }
+
+  /* ── 이미지 ────────────────────────────── */
+  function shrinkCover(file,W,H,cb){
+    const fr=new FileReader();
+    fr.onload=()=>{ const img=new Image();
+      img.onload=()=>{
+        const cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+        const x=cv.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+        const s=Math.max(W/img.width,H/img.height), w=img.width*s, h=img.height*s;
+        x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
+        cb(cv.toDataURL("image/jpeg",.82));
+      };
+      img.onerror=()=>cb(null); img.src=fr.result; };
+    fr.onerror=()=>cb(null); fr.readAsDataURL(file);
+  }
+  function shrinkFit(file,MAX,cb){
+    const fr=new FileReader();
+    fr.onload=()=>{ const img=new Image();
+      img.onload=()=>{
+        const s=Math.min(1,MAX/Math.max(img.width,img.height));
+        const cv=document.createElement("canvas");
+        cv.width=Math.round(img.width*s); cv.height=Math.round(img.height*s);
+        cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+        cb(cv.toDataURL("image/png"));
+      };
+      img.onerror=()=>cb(null); img.src=fr.result; };
+    fr.onerror=()=>cb(null); fr.readAsDataURL(file);
+  }
+
+  /* ── 붙여넣기 파서 ─────────────────────── */
+  const HEAD = {
+    name:/^(이름|성명|성 *명|name)$/i,
+    no:/^(등번호|번호|배번|no\.?|number)$/i,
+    birth:/^(생년월일|생일|생 *년 *월 *일|birth|dob)$/i,
+    team:/^(소속팀|소속|팀|팀명|포지션|team)$/i
+  };
+  function parsePaste(text){
+    const rows = text.split(/\r?\n/).map(r=>r.trim()).filter(Boolean)
+      .map(r=> (r.includes("\t") ? r.split("\t") : r.split(",")).map(c=>c.trim()));
+    if(!rows.length) return [];
+    let map={name:0,no:1,birth:2,team:3};
+    if(rows[0].some(c=>Object.values(HEAD).some(re=>re.test(c)))){
+      map={name:-1,no:-1,birth:-1,team:-1};
+      rows[0].forEach((c,i)=>{ for(const k in HEAD) if(HEAD[k].test(c)&&map[k]<0) map[k]=i; });
+      rows.shift();
+    }
+    return rows.map(cs=>({
+      id:++uid,
+      name: map.name >=0?(cs[map.name] ||""):"",
+      no:   map.no   >=0?(cs[map.no]   ||""):"",
+      birth:map.birth>=0?(cs[map.birth]||""):"",
+      team: map.team >=0?(cs[map.team] ||""):"",
+      photo:null
+    })).filter(m=>m.name||m.birth);
+  }
+
+  /* ── 이벤트 ────────────────────────────── */
+  $$("[data-club]").forEach(el=>el.addEventListener("input",()=>{
+    state.club[el.dataset.club]=el.value; renderAll(); save();
+  }));
+  $("#fBack").addEventListener("input",e=>{ state.back=e.target.value.split(/\n/); renderAll(); save(); });
+
+  function pickStyle(el){
+    if(!el) return;
+    state.club.style=el.dataset.style; renderAll(); save();
+    $(`#stylepick [data-style="${state.club.style}"]`)?.focus();
+  }
+  $("#stylepick").addEventListener("click",e=>pickStyle(e.target.closest("[data-style]")));
+  $("#stylepick").addEventListener("keydown",e=>{
+    if(e.key!=="Enter" && e.key!==" ") return;
+    const el=e.target.closest("[data-style]"); if(!el) return;
+    e.preventDefault(); pickStyle(el);
+  });
+
+  const swWrap=$("#swatches");
+  BANDS.forEach(c=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="sw"; b.style.background=c; b.dataset.c=c;
+    b.setAttribute("aria-label","테마 색 "+c);
+    b.addEventListener("click",()=>{
+      state.club.band=c; $("#fBand").value=c; syncSwatches(); renderAll(); save();
+    });
+    swWrap.insertBefore(b,$("#fBand"));
+  });
+  function syncSwatches(){
+    $$("#swatches .sw").forEach(b=>b.setAttribute("aria-pressed",
+      String((b.dataset.c||"").toLowerCase()===String(state.club.band||"").toLowerCase())));
+  }
+
+  const tb=$("#tbody");
+  tb.addEventListener("input",e=>{
+    const inp=e.target.closest("input[data-f]"); if(!inp) return;
+    state.members[+inp.closest("tr").dataset.i][inp.dataset.f]=inp.value;
+    renderPreview(); renderSheets(); save();
+  });
+  tb.addEventListener("click",e=>{
+    const del=e.target.closest("[data-del]");
+    if(del){
+      state.members.splice(+del.dataset.del,1);
+      cursor=Math.max(0,Math.min(cursor,state.members.length-1));
+      renderTable(); renderAll(); save(); return;
+    }
+    const th=e.target.closest("[data-photo]");
+    if(th){ photoTarget=+th.dataset.photo; $("#filePhoto").value=""; $("#filePhoto").click(); return; }
+    const tr=e.target.closest("tr"); if(tr){ cursor=+tr.dataset.i; renderPreview(); }
+  });
+  tb.addEventListener("focusin",e=>{
+    const tr=e.target.closest("tr"); if(tr && cursor!==+tr.dataset.i){ cursor=+tr.dataset.i; renderPreview(); }
+  });
+
+  let photoTarget=-1;
+  $("#filePhoto").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f||photoTarget<0) return;
+    shrinkCover(f,264,348,url=>{
+      if(!url) return;
+      state.members[photoTarget].photo=url; renderTable(); renderAll(); save();
+    });
+  });
+  $("#btnLogo").addEventListener("click",()=>{ $("#fileLogo").value=""; $("#fileLogo").click(); });
+  $("#fileLogo").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    shrinkFit(f,320,url=>{
+      if(!url) return;
+      state.club.logo=url; $("#logoState").textContent="엠블럼이 적용되었습니다"; renderAll(); save();
+    });
+  });
+  $("#btnLogoClear").addEventListener("click",()=>{
+    state.club.logo=null; $("#logoState").textContent="없으면 창단 연도 도장 문양이 들어갑니다";
+    renderAll(); save();
+  });
+
+  function applyPaste(append){
+    const list=parsePaste($("#fPaste").value);
+    if(!list.length){ $("#fPaste").focus(); return; }
+    state.members = append ? state.members.concat(list) : list;
+    cursor=0; renderTable(); renderAll(); save(); $("#fPaste").value="";
+  }
+  $("#btnParse").addEventListener("click",()=>applyPaste(false));
+  $("#btnParseAdd").addEventListener("click",()=>applyPaste(true));
+  $("#btnAdd").addEventListener("click",()=>{
+    state.members.push({id:++uid,name:"",no:"",birth:"",team:"",photo:null});
+    cursor=state.members.length-1; renderTable(); renderAll(); save();
+    const rows=$$("#tbody tr"); rows[rows.length-1]?.querySelector("input")?.focus();
+  });
+  $("#btnClearAll").addEventListener("click",()=>{
+    if(!state.members.length) return;
+    if(!confirm(`회원 ${state.members.length}명을 모두 지웁니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
+    state.members=[]; cursor=0; renderTable(); renderAll(); save();
+  });
+  $("#btnExport").addEventListener("click", exportBackup);
+  $("#btnImport").addEventListener("click",()=>{ $("#fileBackup").value=""; $("#fileBackup").click(); });
+  $("#fileBackup").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(f) importBackup(f);
+  });
+  $("#btnSample").addEventListener("click",()=>{
+    $("#fPaste").value="이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t새벽FC\n김민수\t7\t1982.03.21\t새벽FC\n박정훈\t10\t790506\t새벽FC";
+    applyPaste(false);
+  });
+
+  $("#prevM").addEventListener("click",()=>{ if(state.members.length){ cursor=(cursor-1+state.members.length)%state.members.length; renderPreview(); }});
+  $("#nextM").addEventListener("click",()=>{ if(state.members.length){ cursor=(cursor+1)%state.members.length; renderPreview(); }});
+  $("#cbPunch").addEventListener("change",renderPreview);
+
+  $("#btnSheets").addEventListener("click",()=>{
+    const on=document.body.classList.toggle("showsheets");
+    $("#btnSheets").textContent = on ? "인쇄 배치 숨기기" : "인쇄 배치 보기";
+    if(on){ fitSheets(); $("#sheets").scrollIntoView({behavior:"smooth",block:"start"}); }
+  });
+  $("#btnPrint").addEventListener("click",()=>{ renderSheets(); setTimeout(()=>window.print(),60); });
+  window.addEventListener("beforeprint",renderSheets);
+
+  /* ── 시작 ──────────────────────────────── */
+  function hydrate(){
+    $$("[data-club]").forEach(el=>{ if(el.type!=="color") el.value = state.club[el.dataset.club] ?? ""; });
+    $("#fBand").value = state.club.band;
+    $("#fBack").value = state.back.join("\n");
+    $("#logoState").textContent = state.club.logo
+      ? "엠블럼이 적용되었습니다" : "없으면 창단 연도 도장 문양이 들어갑니다";
+    syncSwatches();
+  }
+  document.body.classList.add("cutlines");
+  hydrate(); renderTable(); renderAll();
+  loadState().then(st=>{
+    state = st;
+    hydrate(); renderTable(); renderAll();
+    if(!useIDB) setSaved("임시 저장소로 동작 중 · 백업을 권합니다", false);
+  }).catch(()=>setSaved("저장된 내용을 불러오지 못했습니다", false));
+})();
+</script>
+</body>
+</html>
