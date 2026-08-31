@@ -308,16 +308,18 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 }
 .memno{font-family:var(--mono);font-size:2.05mm;line-height:1.2;letter-spacing:-.02em;white-space:nowrap}
 .seal{
-  flex:0 0 auto;border-radius:50%;
-  display:grid;place-items:center;text-align:center;
-  border:.42mm solid #bd3a2b;color:#bd3a2b;
-  transform:rotate(-7deg);
+  flex:0 0 auto;--sealw:10mm;--n:3;
+  border:.55mm solid #b2372a;border-radius:.5mm;color:#b2372a;
+  display:grid;place-items:center;
+  transform:rotate(-6deg);
   print-color-adjust:exact;-webkit-print-color-adjust:exact;
 }
-.seal span{
-  font-family:var(--display);font-weight:700;font-size:2.45mm;line-height:1.2;
-  letter-spacing:-.03em;padding:0 .7mm;word-break:keep-all;
+.sealbox{
+  display:flex;flex-direction:column;align-items:center;gap:.12mm;
+  font-size:calc((var(--sealw) - 2.6mm) / var(--n));line-height:1;
 }
+.sealrow{display:flex;justify-content:center;gap:.3mm}
+.sealrow span{font-family:var(--display);font-weight:900;letter-spacing:-.05em}
 .emblem{display:grid;place-items:center}
 .emblem img{width:100%;height:100%;object-fit:contain}
 .emblem svg{width:100%;height:100%;display:block}
@@ -372,7 +374,7 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .c-classic .foot .issuer{display:flex;flex-direction:column;gap:.3mm;min-width:0}
 .c-classic .org{font-family:var(--display);font-weight:700;font-size:3mm;line-height:1.2;color:#1a222b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c-classic .url{font-family:var(--mono);font-size:2.15mm;color:#54606c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-classic .seal{width:10.6mm;height:10.6mm;margin-left:auto;align-self:flex-end;margin-bottom:.7mm;background:rgba(255,255,255,.6)}
+.c-classic .seal{width:10.6mm;height:10.6mm;--sealw:10.6mm;margin-left:auto;align-self:flex-end;margin-bottom:.7mm;background:rgba(255,255,255,.6)}
 
 /* ── 스타일 B · 모던 ───────────────────── */
 .c-modern{background:#fff}
@@ -425,7 +427,7 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 }
 .c-modern .org{font-family:var(--display);font-weight:700;font-size:2.7mm;line-height:1.2;color:#222a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c-modern .url{font-family:var(--mono);font-size:2mm;color:#77828d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-modern .seal{width:8.6mm;height:8.6mm;margin-left:auto;margin-bottom:-.6mm}
+.c-modern .seal{width:8.6mm;height:8.6mm;--sealw:8.6mm;margin-left:auto;margin-bottom:-.6mm}
 
 /* ── 스타일 C · 크레스트 ───────────────── */
 .c-crest{background:#fdfdfb}
@@ -459,7 +461,7 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .c-crest dd .jersey{font-size:3mm;color:#4c5865}
 .c-crest dd.mono{font-family:var(--mono);font-weight:600;font-size:3.7mm;letter-spacing:-.03em}
 .c-crest dd.sm{font-size:3.5mm;font-weight:500}
-.c-crest .seal{width:10.4mm;height:10.4mm;margin-bottom:.4mm}
+.c-crest .seal{width:10.4mm;height:10.4mm;--sealw:10.4mm;margin-bottom:.4mm}
 .c-crest .pblock{display:flex;flex-direction:column;gap:.8mm;align-items:center;width:21mm}
 .c-crest .photo{width:21mm;height:25mm;border:.22mm solid #c9cdc7}
 .c-crest .memno{color:#5b666f;font-size:1.85mm}
@@ -684,7 +686,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
             </div>
             <div class="field">
               <label for="fSub">영문 이름 / 부제</label>
-              <input type="text" id="fSub" data-club="sub" placeholder="SAEBYEOK FOOTBALL UNION">
+              <input type="text" id="fSub" data-club="sub" placeholder="OULLIM FOOTBALL UNION">
               <span class="note">모던·크레스트 스타일에 표시됩니다.</span>
             </div>
           </div>
@@ -707,7 +709,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
           <div class="row2">
             <div class="field">
               <label for="fUrl">밴드 / 카페 주소</label>
-              <input type="text" id="fUrl" data-club="url" placeholder="band.us/@ourfc">
+              <input type="text" id="fUrl" data-club="url" placeholder="cafe.naver.com/oullimfc">
             </div>
             <div class="field">
               <label for="fSince">창단 연도</label>
@@ -733,6 +735,10 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
               <button class="btn sm ghost" id="btnLogoClear">지우기</button>
               <span class="note" id="logoState">없으면 창단 연도 도장 문양이 들어갑니다</span>
             </div>
+          </div>
+          <div class="field" style="margin-top:4px">
+            <button class="btn sm" id="btnPreset" style="align-self:flex-start">어울림 서식으로 되돌리기</button>
+            <span class="note">이 칸들과 뒷면 문구를 어울림축구연합회 기본 서식으로 되돌립니다. <b>회원 명단은 그대로</b> 둡니다.</span>
           </div>
         </div>
       </section>
@@ -863,14 +869,14 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 
   const DEFAULT = {
     club:{
-      name:"우리조기축구회", sub:"", band:"#1b4f9c", style:"classic",
-      org:"우리조기축구회장 인", seal:"회장인", url:"",
-      since:String(new Date().getFullYear()), prefix:"", issued:"", logo:null
+      name:"어울림연합회원증", sub:"OULLIM FOOTBALL UNION", band:"#0058a3", style:"classic",
+      org:"어울림축구연합회장인", seal:"어울림연합회장인", url:"http://cafe.naver.com/oullimfc",
+      since:"1979", prefix:"", issued:"", logo:"assets/logo-dongnam.png"
     },
     back:[
-      "본 회원증은 우리조기축구회의 회원임을 증명하는 회원증입니다.",
+      "본 회원증은 어울림축구연합회의 회원임을 증명하는 회원증입니다.",
       "본 회원증은 본인만 사용할 수 있으며, 타인에게 양도/대여할 수 없습니다.",
-      "회원증 분실이나 양도 시 발생한 문제에 대한 책임은 본인에게 있습니다."
+      "회원증 분실이나 양도시 발생한 문제에 대한 책임은 본인에게 있습니다."
     ],
     members:[]
   };
@@ -1062,12 +1068,27 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   }
 
   /* ── 카드 앞면 ─────────────────────────── */
+  /* 전각 도장: 글자를 정사각 격자로 앉힌다. 여덟 자면 어울림/연합회/장인 */
+  function sealHTML(){
+    const t = String(state.club.seal||"").replace(/\s+/g,"");
+    if(!t) return "";
+    const ch = [...t];
+    const cols = Math.max(1, Math.ceil(Math.sqrt(ch.length)));
+    const rows = [];
+    for(let i=0;i<ch.length;i+=cols) rows.push(ch.slice(i,i+cols));
+    const n = Math.max(rows.length, cols);
+    return `<div class="seal" style="--n:${n}" aria-label="직인 ${esc(t)}">`
+      + `<div class="sealbox">`
+      + rows.map(r=>`<div class="sealrow">${r.map(c=>`<span>${esc(c)}</span>`).join("")}</div>`).join("")
+      + `</div></div>`;
+  }
+
   function lenClass(s, a, b){ const n=(s||"").length; return n>=b?"l3":(n>=a?"l2":""); }
   function photoHTML(m){
     return m.photo ? `<img src="${m.photo}" alt="">` : `<span class="ph">증명사진<br>3 × 4</span>`;
   }
   const blank = {name:"",no:"",birth:"",team:"",photo:null};
-  const DEMO  = {name:"정경호", no:"14", birth:"1967-11-14", team:"새벽FC", photo:null};
+  const DEMO  = {name:"정경호", no:"14", birth:"1967-11-14", team:"동남FC", photo:null};
 
   function frontHTML(m, opt){
     m = m || blank; opt = opt||{};
@@ -1102,7 +1123,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
         <div class="org">${esc(c.org)}</div>
         ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
       </div>
-      ${c.seal?`<div class="seal"><span>${esc(c.seal)}</span></div>`:""}
+      ${sealHTML()}
     </div>
   </div>`;
   }
@@ -1129,7 +1150,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
         <div class="org">${esc(c.org)}</div>
         ${c.url?`<div class="url">${esc(c.url)}</div>`:""}
       </div>
-      ${c.seal?`<div class="seal"><span>${esc(c.seal)}</span></div>`:""}
+      ${sealHTML()}
     </div>
   </div>`;
   }
@@ -1152,7 +1173,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       <div class="frow"><dt>생년월일 · Birth</dt><dd class="mono">${esc(b.disp)||"—"}</dd></div>
       <div class="frow"><dt>소속팀 · Team</dt><dd class="sm">${esc(m.team)||"—"}</dd></div>
     </dl>
-    ${c.seal?`<div class="seal"><span>${esc(c.seal)}</span></div>`:""}
+    ${sealHTML()}
     <div class="pblock">
       <div class="photo">${photoHTML(m)}</div>
       <div class="memno">${esc(memberNo(m))}</div>
@@ -1479,6 +1500,13 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       state.club.logo=url; $("#logoState").textContent="엠블럼이 적용되었습니다"; renderAll(); save();
     });
   });
+  $("#btnPreset").addEventListener("click",()=>{
+    if(!confirm("조기회 정보와 뒷면 문구를 어울림축구연합회 기본 서식으로 되돌립니다.\n회원 명단은 그대로 둡니다. 계속할까요?")) return;
+    state.club = structuredClone(DEFAULT.club);
+    state.back = DEFAULT.back.slice();
+    hydrate(); renderAll(); save();
+    setSaved("기본 서식을 적용했습니다", true);
+  });
   $("#btnLogoClear").addEventListener("click",()=>{
     state.club.logo=null; $("#logoState").textContent="없으면 창단 연도 도장 문양이 들어갑니다";
     renderAll(); save();
@@ -1503,7 +1531,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   });
   $("#btnSample").addEventListener("click",()=>{
     state.members=[]; 
-    applyGridPaste("이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t새벽FC\n김민수\t7\t1982.03.21\t새벽FC\n박정훈\t10\t790506\t새벽FC", 0, 0);
+    applyGridPaste("이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t동남FC\n김민수\t7\t1982.03.21\t동남FC\n박정훈\t10\t790506\t동남FC", 0, 0);
     cursor=0; renderTable(); renderAll(); save();
   });
 
