@@ -217,7 +217,7 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
   border:1px solid var(--line);border-radius:6px;background:var(--surface-2);
   display:grid;place-items:center;
 }
-.imgrow .ip img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.imgrow .ip img,.imgrow .ip svg{max-width:100%;max-height:100%;object-fit:contain;display:block}
 .imgrow .ip.empty::after{content:"—";color:var(--ink-3);font-size:11px}
 
 /* 카드 디자인 고르기 */
@@ -320,20 +320,28 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .memno{font-family:var(--mono);font-size:2.05mm;line-height:1.2;letter-spacing:-.02em;white-space:nowrap}
 .seal{
   flex:0 0 auto;--sealw:10mm;--n:3;
-  border:.55mm solid #b2372a;border-radius:.5mm;color:#b2372a;
-  display:grid;place-items:center;
-  transform:rotate(-6deg);
+  border:.62mm solid #b2372a;border-radius:.35mm;
+  background:#fdfcfa;color:#b2372a;
+  padding:.62mm;display:block;
+  transform:rotate(-4deg);
   print-color-adjust:exact;-webkit-print-color-adjust:exact;
 }
-.sealbox{
-  display:flex;flex-direction:column;align-items:center;gap:.12mm;
-  font-size:calc((var(--sealw) - 2.6mm) / var(--n));line-height:1;
+.sealbox{display:flex;flex-direction:column;gap:.3mm;width:100%;height:100%}
+.sealrow{display:flex;flex:1;gap:.3mm;min-height:0}
+.sealrow span{
+  flex:1;min-width:0;display:grid;place-items:center;
+  font-family:var(--display);font-weight:900;
+  font-size:calc((var(--sealw) - 3.2mm) / var(--n) * 0.88);
+  line-height:1;letter-spacing:-.02em;
+  /* 한글 글자의 먹 면적은 em 상자의 8할쯤이다. 전각 도장처럼 칸의
+     8할가량을 채우도록 늘리되, 이웃 글자와 붙지 않게 여유를 남긴다. */
+  transform:scale(calc(var(--sx,1) * 1.06), 1.16);
 }
-.sealrow{display:flex;justify-content:center;gap:.3mm}
-.sealrow span{font-family:var(--display);font-weight:900;letter-spacing:-.05em}
 .seal.img{border:none;border-radius:0;background:none;transform:rotate(-3.5deg)}
 .seal.img img{width:100%;height:100%;object-fit:contain;display:block}
 .isslogo{flex:0 0 auto;object-fit:contain;display:block}
+.isslogo.builtin{display:block;aspect-ratio:200/168}
+.isslogo.builtin svg{width:100%;height:100%;display:block}
 .emblem{display:grid;place-items:center}
 .emblem img{width:100%;height:100%;object-fit:contain}
 .emblem svg{width:100%;height:100%;display:block}
@@ -901,7 +909,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       name:"어울림연합회원증", sub:"OULLIM FOOTBALL UNION", band:"#0058a3", style:"classic",
       org:"어울림축구연합회장인", seal:"어울림연합회장인", url:"http://cafe.naver.com/oullimfc",
       since:"1979", prefix:"", issued:"", logo:"assets/logo-dongnam.png",
-      issuerLogo:"assets/logo-oullim.png", sealImg:"assets/seal-oullim.png"
+      issuerLogo:"oullim", sealImg:null
     },
     back:[
       "본 회원증은 어울림축구연합회의 회원임을 증명하는 회원증입니다.",
@@ -1108,16 +1116,45 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     const cols = Math.max(1, Math.ceil(Math.sqrt(ch.length)));
     const rows = [];
     for(let i=0;i<ch.length;i+=cols) rows.push(ch.slice(i,i+cols));
-    const n = Math.max(rows.length, cols);
-    return `<div class="seal" style="--n:${n}" aria-label="직인 ${esc(t)}">`
+    return `<div class="seal" style="--n:${cols}" aria-label="직인 ${esc(t)}">`
       + `<div class="sealbox">`
-      + rows.map(r=>`<div class="sealrow">${r.map(c=>`<span>${esc(c)}</span>`).join("")}</div>`).join("")
+      + rows.map(r=>`<div class="sealrow" style="--sx:${(cols/r.length).toFixed(3)}">`
+          + r.map(c=>`<span>${esc(c)}</span>`).join("") + `</div>`).join("")
       + `</div></div>`;
   }
 
+  /* 어울림 리그 배지. 사진에서 뜬 저해상도 대신 벡터로 다시 그렸다.
+     어떤 크기로 인쇄해도 가장자리가 뭉개지지 않는다. */
+  function oullimBadge(){
+    const id = "b"+(svgSeq++);
+    return `<svg viewBox="0 0 200 168" aria-label="어울림축구연합회">
+  <defs>
+    <path id="${id}t" d="M38,84 A62,62 0 0,1 162,84"/>
+    <path id="${id}b" d="M38,84 A62,62 0 0,0 162,84"/>
+  </defs>
+  <circle cx="100" cy="84" r="62" fill="none" stroke="#23324e" stroke-width="15"/>
+  <text font-family="IBM Plex Sans KR, sans-serif" font-weight="600" font-size="13"
+        fill="#fdfcfa" letter-spacing="7">
+    <textPath href="#${id}t" startOffset="50%" text-anchor="middle">SINCE</textPath></text>
+  <text font-family="IBM Plex Sans KR, sans-serif" font-weight="600" font-size="13"
+        fill="#fdfcfa" letter-spacing="5">
+    <textPath href="#${id}b" startOffset="50%" text-anchor="middle">LEAGUE</textPath></text>
+  <text x="100" y="57" text-anchor="middle" font-family="IBM Plex Sans KR, sans-serif"
+        font-weight="600" font-size="16" fill="#23324e" letter-spacing="1.5">JANUARY</text>
+  <text x="100" y="126" text-anchor="middle" font-family="IBM Plex Sans KR, sans-serif"
+        font-weight="600" font-size="17" fill="#23324e" letter-spacing="2">2010</text>
+  <path d="M0,68 H200 V100 H0 Z" fill="#b3282f"/>
+  <path d="M5,73 H195 V95 H5 Z" fill="#23324e"/>
+  <text x="100" y="89" text-anchor="middle" font-family="IBM Plex Sans KR, sans-serif"
+        font-weight="600" font-size="15" fill="#e8c96a"
+        textLength="178" lengthAdjust="spacingAndGlyphs">OULLIM FOOTBALL UNION</text>
+</svg>`;
+  }
   function issuerLogoHTML(){
-    return state.club.issuerLogo
-      ? `<img class="isslogo" src="${esc(state.club.issuerLogo)}" alt="">` : "";
+    const v = state.club.issuerLogo;
+    if(!v) return "";
+    if(v === "oullim") return `<span class="isslogo builtin">${oullimBadge()}</span>`;
+    return `<img class="isslogo" src="${esc(v)}" alt="">`;
   }
 
   function lenClass(s, a, b){ const n=(s||"").length; return n>=b?"l3":(n>=a?"l2":""); }
@@ -1579,7 +1616,8 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       const el = $(SLOTS[k].pv); if(!el) continue;
       const v = state.club[k];
       el.classList.toggle("empty", !v);
-      el.innerHTML = v ? `<img src="${esc(v)}" alt="">` : "";
+      el.innerHTML = !v ? ""
+        : (v === "oullim" ? oullimBadge() : `<img src="${esc(v)}" alt="">`);
     }
   }
   $("#btnPreset").addEventListener("click",()=>{
