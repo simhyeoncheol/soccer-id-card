@@ -354,7 +354,7 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 }
 .c-classic .band span{
   font-family:var(--display);font-weight:900;font-size:5.3mm;line-height:1;
-  letter-spacing:.26em;text-indent:.26em;white-space:nowrap;
+  letter-spacing:.2em;text-indent:.2em;white-space:nowrap;
 }
 .c-classic .band.l2 span{font-size:4.3mm;letter-spacing:.13em;text-indent:.13em}
 .c-classic .band.l3 span{font-size:3.5mm;letter-spacing:.06em;text-indent:.06em}
@@ -515,15 +515,15 @@ input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line
 .back .topbar2 .k{font-family:var(--mono);font-size:1.9mm;letter-spacing:.18em;color:rgba(255,255,255,.85);white-space:nowrap}
 .back .wm{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:34mm;height:34mm;opacity:.1;pointer-events:none}
 .back .notes{
-  position:relative;list-style:none;margin:0;padding:0 5mm;
+  position:relative;list-style:none;margin:0;padding:0 4mm;
   flex:1;display:flex;flex-direction:column;justify-content:center;gap:3mm;
 }
 .back .notes li{
-  position:relative;padding-left:3.6mm;
+  position:relative;padding-left:3mm;
   font-size:var(--noteFs, 3mm);line-height:1.45;color:#131a21;word-break:keep-all;
 }
 .back .notes li::before{
-  content:"";position:absolute;left:0;top:1.35mm;width:2.2mm;height:.3mm;background:var(--band);
+  content:"";position:absolute;left:0;top:1.3mm;width:1.9mm;height:.3mm;background:var(--band);
   print-color-adjust:exact;-webkit-print-color-adjust:exact;
 }
 .back .bfoot{
@@ -909,7 +909,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 
   const DEFAULT = {
     club:{
-      name:"어울림연합회원증", sub:"OULLIM FOOTBALL UNION", band:"#0058a3", style:"classic",
+      name:"어울림연합 회 원 증", sub:"OULLIM FOOTBALL UNION", band:"#0058a3", style:"classic",
       org:"어울림축구연합회장인", seal:"어울림연합회장인", url:"http://cafe.naver.com/oullimfc",
       since:"1979", prefix:"", issued:"", logo:"assets/logo-dongnam.png",
       issuerLogo:"oullim", sealImg:"assets/seal-oullim.png"
@@ -1160,7 +1160,10 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     return `<img class="isslogo" src="${esc(v)}" alt="">`;
   }
 
-  function lenClass(s, a, b){ const n=(s||"").length; return n>=b?"l3":(n>=a?"l2":""); }
+  function lenClass(s, a, b){
+    const n = (s||"").replace(/\s/g,"").length;   // 띄어쓰기는 글자 수에서 뺀다
+    return n>=b?"l3":(n>=a?"l2":"");
+  }
   function photoHTML(m){
     return m.photo ? `<img src="${m.photo}" alt="">` : `<span class="ph">증명사진<br>3 × 4</span>`;
   }
@@ -1177,7 +1180,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   function fClassic(m){
     const c = state.club, b = normBirth(m.birth);
     return `
-  <div class="band ${lenClass(c.name,8,11)}"><span>${esc(c.name)}</span></div>
+  <div class="band ${lenClass(c.name,9,12)}"><span>${esc(c.name)}</span></div>
   <div class="rule"></div>
   <div class="plate">
     <div class="wm emblem" style="color:#1a2129">${emblemHTML()}</div>
@@ -1282,9 +1285,9 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   }
 
   /* ── 렌더 ──────────────────────────────── */
-  /* 뒷면 유의사항은 한 항목이 두 줄을 넘지 않아야 읽힌다.
-     미리보기에서 한 번 재서 글자 크기를 정하고, 그 값을 변수로 넘겨
-     인쇄 배치의 카드들까지 같은 크기를 쓰게 한다. */
+  /* 뒷면 유의사항은 한 항목이 한 줄에 들어가야 읽힌다. 미리보기에서
+     한 번 재서 글자 크기를 정하고, 그 값을 변수로 넘겨 인쇄 배치의
+     카드들까지 같은 크기를 쓰게 한다. */
   function fitBackNotes(){
     const ul = document.querySelector("#backMount .notes");
     if(!ul) return;
@@ -1292,18 +1295,18 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     if(!items.length) return;
     const root = document.documentElement;
     let fs = 3.05;
-    for(let i=0;i<26;i++){
+    for(let i=0;i<40;i++){
       root.style.setProperty("--noteFs", fs.toFixed(2)+"mm");
       const tooTall = ul.scrollHeight > ul.clientHeight + 1;
       const wraps = items.some(li=>{
         const lh = parseFloat(getComputedStyle(li).lineHeight) || 1;
-        return li.scrollHeight > lh*2 + 1;      // 두 줄 초과
+        return li.scrollHeight > lh*1.5;        // 두 줄로 넘어갔다
       });
       if(!tooTall && !wraps) return;
-      fs -= 0.07;
-      if(fs < 1.85) break;
+      fs -= 0.05;
+      if(fs < 1.7) break;
     }
-    root.style.setProperty("--noteFs", Math.max(fs,1.85).toFixed(2)+"mm");
+    root.style.setProperty("--noteFs", Math.max(fs,1.7).toFixed(2)+"mm");
   }
 
   function renderPreview(){
