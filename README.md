@@ -113,6 +113,7 @@ assets/fonts.css      @font-face 선언
 assets/fonts/*.woff2  자체 호스팅 웹폰트 576개 / 4.8MB
 assets/logo-dongnam.png  동남FC 엠블럼 (배경 워터마크)
 assets/seal-oullim.png   어울림연합회장인 직인 (전서체 사각 양각)
+assets/logo-oullim.png   어울림축구연합 배지 (발급기관 로고)
 ```
 
 외부 CDN을 하나도 쓰지 않아서, 폰트 CDN이 막힌 사내망이나 학교망에서도
