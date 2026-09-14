@@ -7,14 +7,36 @@
 
 <br>
 
-## 서버가 없습니다
+## 저장 — Firebase 클라우드
 
-회원 이름·생년월일·얼굴 사진은 **브라우저 밖으로 한 번도 나가지 않습니다.**
-모든 처리가 보고 있는 그 페이지 안에서 끝나고, 데이터는 브라우저의
-IndexedDB 에만 저장됩니다. 업로드하는 곳도, 수집하는 주체도 없습니다.
+관리자 아이디로 로그인해야 쓸 수 있고, 명단은 **Firebase Firestore**에 자동 저장됩니다.
+다른 컴퓨터·브라우저에서 로그인해도 같은 명단이 이어지고, 관리자 여럿이 동시에 고치면
+서로의 화면에 바로 반영됩니다. 로그아웃하면 그 브라우저에 남은 임시 사본도 지웁니다.
 
-대신 브라우저를 바꾸거나 방문 기록을 지우면 사라집니다.
-명단을 다 채우면 **백업 파일 저장**을 한 번 눌러 두세요.
+| 문서 | 내용 |
+| --- | --- |
+| `members/{key}` | 회원 한 명 (이름·등번호·생년월일·소속팀·사진·순서) |
+| `idcard/settings` | 조기회 정보 + 뒷면 문구 |
+| `idcard/img_logo` · `img_issuerLogo` · `img_sealImg` | 이미지 세 칸 |
+
+증명사진은 264×348 JPEG(30KB 안팎)라 Firestore 문서에 그대로 넣습니다.
+Cloud Storage 를 쓰지 않으니 무료(Spark) 요금제로 충분합니다.
+
+### 처음 한 번 설정
+
+1. [Firebase 콘솔](https://console.firebase.google.com)에서 프로젝트를 만듭니다.
+2. **빌드 → Authentication → 시작하기 → 이메일/비밀번호** 를 켭니다.
+3. **Authentication → 설정 → 사용자 작업** 에서 **생성(가입) 사용** 을 끕니다.
+   콘솔에서 만든 계정 말고는 아무도 가입하지 못하게 막는 설정입니다. 꼭 끄세요.
+4. **Authentication → 사용자 → 사용자 추가** 로 관리자 계정을 만듭니다.
+   이메일 칸에 `아이디@soccer-idcard.example` 을 넣으면, 로그인 화면에서는 `아이디` 만 치면 됩니다.
+   아이디는 영문 소문자·숫자·`. _ -`, 비밀번호는 6자 이상(Firebase 규칙)입니다.
+5. **빌드 → Firestore Database → 데이터베이스 만들기** (위치 `asia-northeast3` 서울 권장, 프로덕션 모드).
+6. **Firestore → 규칙** 탭에 [`firestore.rules`](firestore.rules) 내용을 붙여넣고 게시합니다.
+7. **프로젝트 설정 → 일반 → 내 앱 → 웹 앱 추가(</>)** 후 나오는 `firebaseConfig` 값을
+   [`firebase-config.js`](firebase-config.js) 에 붙여넣습니다. 이 값은 공개돼도 되는 주소 정보입니다.
+
+예전 버전에서 이 브라우저에 저장해 둔 명단이 있으면, 처음 로그인할 때 클라우드로 올릴지 묻습니다.
 
 <br>
 
@@ -100,15 +122,19 @@ cd soccer-id-card
 python3 -m http.server 8000   # http://localhost:8000
 ```
 
-`file://` 로 열어도 대부분 동작하지만, IndexedDB 가 막히는 브라우저가 있어
-로컬 서버로 여는 편이 안전합니다.
+`file://` 로는 열리지 않습니다(모듈 스크립트). 로컬 서버로 여세요.
+
+에뮬레이터로 시험하려면 `firebase emulators:start --only auth,firestore` 를 띄우고
+`http://localhost:8000/?emulator` 로 엽니다. Firestore 포트가 8080 이 아니면 `?emulator=8085` 처럼 적습니다.
 
 <br>
 
 ## 구성
 
 ```
-index.html            전부 여기에 (HTML + CSS + JS, 의존성 없음)
+index.html            전부 여기에 (HTML + CSS + JS)
+firebase-config.js    Firebase 프로젝트 설정값
+firestore.rules       Firestore 보안 규칙 (콘솔에 붙여넣기)
 assets/fonts.css      @font-face 선언
 assets/fonts/*.woff2  자체 호스팅 웹폰트 576개 / 4.8MB
 assets/logo-dongnam.png  동남FC 엠블럼 (배경 워터마크)
@@ -116,8 +142,8 @@ assets/seal-oullim.png   어울림연합회장인 직인 (전서체 사각 양�
 assets/logo-oullim.png   어울림축구연합 배지 (발급기관 로고)
 ```
 
-외부 CDN을 하나도 쓰지 않아서, 폰트 CDN이 막힌 사내망이나 학교망에서도
-글자가 깨지지 않습니다.
+폰트는 자체 호스팅이라 폰트 CDN이 막힌 망에서도 글자가 깨지지 않습니다.
+Firebase SDK 는 `www.gstatic.com` 에서 불러옵니다.
 
 <br>
 

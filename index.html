@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>조기축구 회원증 메이커</title>
-<meta name="description" content="조기축구회 회원증을 만들어 A4 한 장에 10장씩 인쇄합니다. 엑셀 명단을 붙여넣고 증명사진만 넣으면 끝. 서버가 없어 회원 정보가 브라우저 밖으로 나가지 않습니다.">
+<meta name="description" content="조기축구회 회원증을 만들어 A4 한 장에 10장씩 인쇄합니다. 엑셀 명단을 붙여넣고 증명사진만 넣으면 끝. 관리자 로그인 후 명단이 클라우드에 저장됩니다.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1b4f9c">
 <meta property="og:type" content="website">
 <meta property="og:title" content="조기축구 회원증 메이커">
-<meta property="og:description" content="조기축구회 회원증을 만들어 A4 한 장에 10장씩 인쇄합니다. 엑셀 명단을 붙여넣고 증명사진만 넣으면 끝. 서버가 없어 회원 정보가 브라우저 밖으로 나가지 않습니다.">
+<meta property="og:description" content="조기축구회 회원증을 만들어 A4 한 장에 10장씩 인쇄합니다. 엑셀 명단을 붙여넣고 증명사진만 넣으면 끝. 관리자 로그인 후 명단이 클라우드에 저장됩니다.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231b4f9c'/%3E%3Crect x='6' y='8' width='20' height='16' rx='2' fill='%23fbfbf9'/%3E%3Crect x='6' y='8' width='20' height='4.5' fill='%23bf421c'/%3E%3Crect x='8.5' y='15' width='6' height='7' rx='1' fill='%23c3c8cd'/%3E%3Crect x='16.5' y='15.5' width='7' height='1.6' fill='%235b6672'/%3E%3Crect x='16.5' y='18.5' width='5' height='1.6' fill='%235b6672'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/fonts.css">
 <style>img{max-width:100%}[hidden]{display:none!important}</style>
@@ -677,6 +677,34 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   .sheet:last-child{page-break-after:auto;break-after:auto}
   .punch{display:none}
 }
+/* ═════════════════════════════════════════════
+   로그인 · 클라우드 저장
+   ═════════════════════════════════════════════ */
+.whoami{font-family:var(--mono);font-size:11.5px;color:var(--bar-ink-2);white-space:nowrap}
+.gate{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:24px 16px;
+  background:var(--ground);
+}
+body.authed .gate{display:none}
+.gatebox{
+  width:100%;max-width:340px;padding:28px 26px 24px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;
+}
+.gatebox h2{font-size:18px;font-weight:900;letter-spacing:-.03em;margin:0 0 4px}
+.gatebox .sub{font-size:12.5px;color:var(--ink-3);margin:0 0 22px;word-break:keep-all}
+.gatebox input[type=password]{
+  width:100%;padding:9px 12px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+}
+.gatebox input[type=password]:focus{background:var(--surface);border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.gatebox .btn{justify-content:center;margin-top:6px;padding:10px 15px}
+.gatebox .btn:disabled{opacity:.6;cursor:default}
+.gatemsg{min-height:1.5em;margin:12px 0 0;font-size:12.5px;line-height:1.5;color:var(--accent);word-break:keep-all}
+.gatemsg.info{color:var(--ink-2)}
+.gate.busy form .field,.gate.busy form .btn{display:none}
+
 @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 </style>
 </head>
@@ -688,8 +716,27 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     <span class="tag">86 × 54 mm · CR80</span>
   </div>
   <span class="saved" id="saved">자동 저장됨</span>
+  <span class="whoami" id="whoami"></span>
+  <button class="btn" id="btnLogout">로그아웃</button>
   <button class="btn" id="btnSheets">인쇄 배치 보기</button>
   <button class="btn primary" id="btnPrint">인쇄 / PDF 저장</button>
+</div>
+
+<div class="gate busy" id="gate">
+  <form class="gatebox" id="loginForm">
+    <h2>조기축구 회원증 메이커</h2>
+    <p class="sub">관리자 계정으로 로그인하세요. 회원 명단은 클라우드에 저장되어 어느 기기에서든 이어서 작업할 수 있습니다.</p>
+    <div class="field">
+      <label for="lgId">아이디</label>
+      <input type="text" id="lgId" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+    </div>
+    <div class="field">
+      <label for="lgPw">비밀번호</label>
+      <input type="password" id="lgPw" name="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn primary" type="submit" id="lgBtn">로그인</button>
+    <p class="gatemsg info" id="gateMsg" role="status">연결 중…</p>
+  </form>
 </div>
 
 <div class="wrap">
@@ -871,8 +918,8 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
             <span>배율과 여백을 가장 정확하게 다룹니다. 사파리는 여백 옵션이 달라 카드가 몇 mm씩 틀어질 수 있고, 휴대폰에서는 A4 배치가 제대로 나오지 않습니다.</span>
           </div>
           <div class="callout quiet">
-            <b>명단은 이 브라우저에만 저장됩니다</b>
-            <span>서버가 없어서 회원 이름·생년월일·사진이 <b>이 컴퓨터 밖으로 나가지 않습니다.</b> 대신 브라우저를 바꾸거나 방문 기록을 지우면 사라지니, 명단을 다 채우면 <b>백업 파일 저장</b>을 한 번 눌러 두세요.</span>
+            <b>명단은 클라우드에 자동 저장됩니다</b>
+            <span>로그인한 관리자끼리 같은 명단을 보고 고칩니다. 다른 컴퓨터나 브라우저에서 로그인해도 그대로 이어집니다. 만일을 위해 가끔 <b>백업 파일 저장</b>도 눌러 두세요.</span>
           </div>
         </div>
       </section>
@@ -881,7 +928,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 </div>
 
 <footer class="sitefoot">
-  <span>회원 정보는 서버로 전송되지 않고 이 브라우저 안에만 저장됩니다.</span>
+  <span>회원 정보는 관리자 로그인이 필요한 Firebase 클라우드에 저장됩니다.</span>
   <span class="sep">·</span>
   <span>인쇄는 크롬 권장</span>
   <span class="sep">·</span>
@@ -893,7 +940,16 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 <input type="file" id="fileLogo" accept="image/*" hidden>
 <input type="file" id="fileBackup" accept="application/json,.json" hidden>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, onSnapshot, writeBatch, serverTimestamp,
+  waitForPendingWrites, terminate, clearIndexedDbPersistence, connectFirestoreEmulator
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
+
 (function(){
   "use strict";
   const $  = (s,r=document)=>r.querySelector(s);
@@ -924,11 +980,9 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 
   let state = structuredClone(DEFAULT), cursor = 0, uid = 0, svgSeq = 0;
 
-  /* ── 저장소 · IndexedDB 우선, 막히면 localStorage ────────────
-     사진까지 담아야 해서 5MB 한도가 있는 localStorage 로는 부족하다.
-     IndexedDB 는 사실상 한도가 없고, 예전 localStorage 데이터는
-     처음 실행될 때 한 번 옮겨온다. 어느 쪽이든 데이터는 이 브라우저
-     안에만 남고 서버로 나가지 않는다. */
+  /* ── 예전 로컬 저장소 · 읽기 전용 ─────────────────────────
+     클라우드로 옮기기 전에는 IndexedDB(막히면 localStorage)에 저장했다.
+     이제는 로그인 후 클라우드가 비어 있을 때 한 번 올려 보내는 데만 쓴다. */
   const DB = (()=>{
     const NAME="soccer-idcard", STORE="kv", K="state";
     let opened=null;
@@ -954,63 +1008,386 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     return {
       available: (typeof indexedDB!=="undefined" && indexedDB!==null),
       get: ()=>tx("readonly", s=>s.get(K)),
-      set: v=>tx("readwrite", s=>s.put(v,K))
+      del: ()=>tx("readwrite", s=>s.delete(K))
     };
   })();
 
+  const newKey = ()=> (crypto.randomUUID ? crypto.randomUUID().replace(/-/g,"")
+    : Date.now().toString(36)+Math.random().toString(36).slice(2,12));
+
   function normalize(p){
     if(!p || typeof p!=="object") return structuredClone(DEFAULT);
+    const seen = new Set();
+    const uniq = m => { if(seen.has(m.key)) m.key = newKey(); seen.add(m.key); return m; };
     return {
       club: Object.assign({}, DEFAULT.club, p.club||{}),
       back: (Array.isArray(p.back)&&p.back.length) ? p.back.map(x=>String(x==null?"":x)) : DEFAULT.back.slice(),
       members: Array.isArray(p.members) ? p.members.filter(m=>m&&typeof m==="object").map(m=>({
-        id:++uid,
+        key:(typeof m.key==="string" && /^[A-Za-z0-9_-]{8,64}$/.test(m.key)) ? m.key : newKey(),
         name:String(m.name||""), no:String(m.no||""),
         birth:String(m.birth||""), team:String(m.team||""),
         photo:(typeof m.photo==="string" && m.photo.startsWith("data:image/")) ? m.photo : null
-      })) : []
+      })).map(uniq) : []
     };
   }
 
-  let useIDB = DB.available;
-  async function loadState(){
-    if(useIDB){
-      try{
-        const v = await DB.get();
-        if(v) return normalize(v);
-      }catch(e){ useIDB=false; }
-    }
-    let legacy=null;
-    try{ legacy = JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){}
-    const st = normalize(legacy);
-    if(legacy && useIDB){
-      try{ await DB.set(st); localStorage.removeItem(KEY); }catch(e){}
-    }
-    return st;
+  async function loadLegacy(){
+    let v=null;
+    if(DB.available){ try{ v = await DB.get(); }catch(e){} }
+    if(!v){ try{ v = JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){} }
+    return v ? normalize(v) : null;
+  }
+  async function clearLegacy(){
+    if(DB.available){ try{ await DB.del(); }catch(e){} }
+    try{ localStorage.removeItem(KEY); }catch(e){}
   }
 
   function setSaved(msg, good){
     const el=$("#saved");
     el.textContent=msg;
-    el.classList.toggle("on", !!good);
-    el.classList.toggle("warn", !good);
-    if(good) setTimeout(()=>el.classList.remove("on"), 1200);
+    el.classList.toggle("on", good===true);
+    el.classList.toggle("warn", good===false);
+    if(good===true) setTimeout(()=>el.classList.remove("on"), 1200);
   }
-  let saveTimer=null;
-  function save(){
+
+  /* ── 클라우드 저장 · Firebase ─────────────────────────────
+     members/{key}      회원 한 명 = 문서 하나 (사진 data URL 포함, 30KB 안팎)
+     idcard/settings    조기회 정보(이미지 제외) + 뒷면 문구
+     idcard/img_{slot}  이미지 세 칸 — 문서 한도(1MB)를 나눠 쓰려고 따로 둔다
+
+     화면의 state 가 원본이고, 마지막으로 서버와 맞춘 모양을 synced 에 둔다.
+     저장은 state 와 synced 의 차이만 쓴다. 다른 관리자가 고친 내용은
+     onSnapshot 으로 들어와 synced 와 다를 때만 화면에 반영한다. */
+  const IMG_KEYS = ["logo","issuerLogo","sealImg"];
+  const CONFIGURED = !!(firebaseConfig && firebaseConfig.apiKey && !/^YOUR_/.test(firebaseConfig.apiKey));
+  const fbApp  = CONFIGURED ? initializeApp(firebaseConfig) : null;
+  const auth   = fbApp && getAuth(fbApp);
+  const fs     = fbApp && initializeFirestore(fbApp, {
+    localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+  });
+  // 로컬 테스트: http://localhost:8000/?emulator  (firebase emulators:start 로 띄운 에뮬레이터에 붙는다)
+  //            Firestore 에뮬레이터 포트가 8080 이 아니면 ?emulator=8085 처럼 적는다
+  const EMU = new URLSearchParams(location.search).get("emulator");
+  if(fbApp && EMU!==null && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)){
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", {disableWarnings:true});
+    connectFirestoreEmulator(fs, "127.0.0.1", +EMU || 8080);
+  }
+
+  const stable = v => JSON.stringify(v, (k,x)=> (x && typeof x==="object" && !Array.isArray(x))
+    ? Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk],o),{}) : x);
+  const memberData = (m, order) => ({
+    name:String(m.name||""), no:String(m.no||""), birth:String(m.birth||""), team:String(m.team||""),
+    photo:(typeof m.photo==="string" && m.photo.startsWith("data:image/")) ? m.photo : null,
+    order
+  });
+  const settingsData = () => {
+    const club = {...state.club};
+    IMG_KEYS.forEach(k=>delete club[k]);
+    return {club, back:state.back.slice()};
+  };
+
+  let synced = null;      // {settings, img:{}, members:Map(key→json), order:Map(key→n)}
+  let ready = false, saveTimer = null, unsubs = [], inflight = 0;
+  // 회원 문서는 사용자가 실제로 고친 것만 쓴다. 다른 관리자의 변경을 받아
+  // 화면을 다시 정렬한 결과까지 쓰면, 나뉘어 도착하는 삭제를 되살리게 된다.
+  let dirtyKeys = new Set(), structural = false;
+  const resetSynced = ()=>{
+    synced = {settings:null, img:{}, members:new Map(), order:new Map()};
+    dirtyKeys = new Set(); structural = false;
+  };
+  resetSynced();
+
+  /* save()                  조기회 정보·이미지·뒷면 문구
+     save({key})             회원 한 명의 내용
+     save({structure:true})  줄 추가·삭제·붙여넣기·불러오기 — 명단 전체를 화면대로 맞춘다 */
+  function save(opt){
+    if(!ready) return;
+    if(opt && opt.key) dirtyKeys.add(opt.key);
+    if(opt && opt.structure) structural = true;
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(async ()=>{
-      if(useIDB){
-        try{ await DB.set(state); setSaved("자동 저장됨", true); return; }
-        catch(e){ useIDB=false; }
+    saveTimer = setTimeout(flushNow, 600);
+  }
+
+  /* 바뀐 문서만 모아 커밋. 이번에 쓴 문서 키 집합을 돌려준다. */
+  function flushNow(){
+    clearTimeout(saveTimer); saveTimer=null;
+    const wrote = new Set();
+    if(!ready || !fs) return wrote;
+    const ops = [];   // [ref, data|null, size]
+    const by = auth.currentUser ? auth.currentUser.uid : null;
+
+    const s = settingsData(), sj = stable(s);
+    if(sj !== synced.settings){
+      ops.push([doc(fs,"idcard","settings"), {...s, updatedAt:serverTimestamp(), updatedBy:by}, sj.length]);
+      synced.settings = sj; wrote.add("settings");
+    }
+    IMG_KEYS.forEach(k=>{
+      const v = state.club[k] ?? null, vj = stable(v);
+      if(vj !== synced.img[k]){
+        ops.push([doc(fs,"idcard","img_"+k), {v, updatedAt:serverTimestamp()}, vj.length]);
+        synced.img[k] = vj; wrote.add("img_"+k);
       }
-      try{
-        localStorage.setItem(KEY, JSON.stringify(state));
-        setSaved("자동 저장됨 · 임시 저장소", true);
-      }catch(e){
-        setSaved("저장 실패 — 백업 파일로 내려받으세요", false);
+    });
+    const putMember = (m, order)=>{
+      const d = memberData(m, order), dj = stable(d);
+      if(dj === synced.members.get(m.key)) return;
+      ops.push([doc(fs,"members",m.key), {...d, updatedAt:serverTimestamp(), updatedBy:by}, dj.length]);
+      synced.members.set(m.key,dj); synced.order.set(m.key,order); wrote.add(m.key);
+    };
+    const dropMember = k=>{
+      if(!synced.members.has(k)) return;
+      ops.push([doc(fs,"members",k), null, 0]);
+      synced.members.delete(k); synced.order.delete(k); wrote.add(k);
+    };
+    if(structural){
+      // 화면 순서가 곧 명단 순서. 순서가 그대로면 order 값도 건드리지 않는다.
+      const fl = filled(), keep = new Set(fl.map(m=>m.key));
+      const sameSeq = fl.every((m,i)=> synced.order.has(m.key)
+        && (i===0 || synced.order.get(fl[i-1].key) < synced.order.get(m.key)));
+      fl.forEach((m,i)=> putMember(m, sameSeq ? synced.order.get(m.key) : i));
+      [...synced.members.keys()].forEach(k=>{ if(!keep.has(k)) dropMember(k); });
+    } else if(dirtyKeys.size){
+      let maxOrder = -1;
+      synced.order.forEach(o=>{ if(o>maxOrder) maxOrder=o; });
+      dirtyKeys.forEach(k=>{
+        const m = state.members.find(x=>x.key===k);
+        if(!m) return;                                // 그새 다른 관리자가 지웠다
+        if(!hasContent(m)) return dropMember(k);      // 칸을 다 비웠다
+        putMember(m, synced.order.has(k) ? synced.order.get(k) : ++maxOrder);
+      });
+    }
+    dirtyKeys = new Set(); structural = false;
+    if(!ops.length) return wrote;
+
+    // 한 번에 500건, 요청 10MB 한도 — 여유 있게 잘라서 보낸다
+    const chunks=[]; let cur=[], bytes=0;
+    ops.forEach(op=>{
+      if(cur.length && (cur.length>=400 || bytes+op[2] > 8e6)){ chunks.push(cur); cur=[]; bytes=0; }
+      cur.push(op); bytes+=op[2];
+    });
+    if(cur.length) chunks.push(cur);
+
+    setSaved("저장 중…", null);
+    const offlineHint = setTimeout(()=>{ if(inflight) setSaved("오프라인 · 연결되면 저장됩니다", null); }, 4000);
+    chunks.forEach(ch=>{
+      const b = writeBatch(fs);
+      ch.forEach(([ref,data])=> data ? b.set(ref,data) : b.delete(ref));
+      inflight++;
+      b.commit().then(()=>{
+        if(--inflight===0){ clearTimeout(offlineHint); setSaved("저장됨", true); }
+      }).catch(err=>{
+        inflight--; clearTimeout(offlineHint);
+        console.error("[cloud] commit failed", err);
+        // 실패한 문서는 다음 저장 때 다시 쓰도록 synced 에서 뺀다
+        ch.forEach(([ref])=>{
+          const id = ref.id;
+          if(ref.parent.id==="members"){ synced.members.delete(id); synced.order.delete(id); }
+          else if(id==="settings") synced.settings=null;
+          else synced.img[id.replace(/^img_/,"")] = undefined;
+        });
+        setSaved(err.code==="permission-denied" ? "저장 권한 없음 — 다시 로그인하세요" : "저장 실패 — 백업 파일로 내려받으세요", false);
+      });
+    });
+    return wrote;
+  }
+
+  /* 표를 다시 그려도 입력 중인 칸과 커서를 지킨다 */
+  function keepFocus(fn){
+    const a = document.activeElement;
+    const inp = a && a.closest ? a.closest("#tbody input[data-f]") : null;
+    let fc = null;
+    if(inp){
+      const r = +inp.closest("tr").dataset.i;
+      fc = {key:state.members[r]?.key, f:inp.dataset.f, s:inp.selectionStart, e:inp.selectionEnd};
+    }
+    const curKey = state.members[cursor]?.key;
+    fn();
+    const ci = state.members.findIndex(m=>m.key===curKey);
+    cursor = ci>=0 ? ci : Math.max(0, Math.min(cursor, state.members.length-1));
+    if(fc && fc.key){
+      const r = state.members.findIndex(m=>m.key===fc.key);
+      const el = r>=0 && document.querySelector(`#tbody tr[data-i="${r}"] input[data-f="${fc.f}"]`);
+      if(el){ el.focus(); try{ el.setSelectionRange(fc.s,fc.e); }catch(e){} }
+    }
+  }
+
+  const memberIsNews = c => c.type==="removed"
+    ? synced.members.has(c.doc.id)
+    : stable(memberData(c.doc.data(), Number(c.doc.data().order)||0)) !== synced.members.get(c.doc.id);
+
+  function onMembersSnap(snap){
+    const ch = snap.docChanges();
+    if(!ch.some(memberIsNews)) return;              // 전부 내 쓰기의 메아리
+    const wrote = ready ? flushNow() : new Set();   // 로컬에서 고치던 것 먼저 확정
+    let touched = false;
+    ch.forEach(c=>{
+      const k = c.doc.id;
+      if(wrote.has(k)) return;                      // 방금 내가 쓴 것이 더 새롭다
+      if(c.type==="removed"){
+        if(!synced.members.has(k)) return;
+        synced.members.delete(k); synced.order.delete(k);
+        const i = state.members.findIndex(m=>m.key===k);
+        if(i>=0) state.members.splice(i,1);
+        touched = true; return;
       }
-    }, 350);
+      const raw = c.doc.data();
+      const d = memberData(raw, Number(raw.order)||0), dj = stable(d);
+      if(dj === synced.members.get(k)) return;      // 내 쓰기의 메아리
+      synced.members.set(k,dj); synced.order.set(k,d.order);
+      const m = state.members.find(x=>x.key===k);
+      if(m) Object.assign(m, {name:d.name,no:d.no,birth:d.birth,team:d.team,photo:d.photo});
+      else state.members.push({key:k,name:d.name,no:d.no,birth:d.birth,team:d.team,photo:d.photo});
+      touched = true;
+    });
+    if(!touched) return;
+    keepFocus(()=>{
+      state.members = state.members.filter(hasContent)
+        .sort((a,b)=>(synced.order.get(a.key)??1e9)-(synced.order.get(b.key)??1e9));
+      renderTable();
+    });
+    if(ready) renderAll();
+  }
+
+  const remoteSettings = d => {
+    const s = {club:Object.assign({}, d.club||{}), back:Array.isArray(d.back)?d.back.map(String):[]};
+    IMG_KEYS.forEach(k=>delete s.club[k]);
+    return s;
+  };
+  const settingIsNews = c => {
+    const id = c.doc.id, d = c.type==="removed" ? null : c.doc.data();
+    if(!d) return false;
+    if(id==="settings") return stable(remoteSettings(d)) !== synced.settings;
+    if(id.startsWith("img_")) return stable(d.v ?? null) !== synced.img[id.slice(4)];
+    return false;
+  };
+
+  function onSettingsSnap(snap){
+    const ch = snap.docChanges();
+    if(!ch.some(settingIsNews)) return;
+    const wrote = ready ? flushNow() : new Set();
+    let touched = false;
+    ch.forEach(c=>{
+      const id = c.doc.id;
+      if(wrote.has(id) || c.type==="removed") return;
+      const d = c.doc.data();
+      if(id==="settings"){
+        const s = remoteSettings(d);
+        const sj = stable(s);
+        if(sj === synced.settings) return;
+        synced.settings = sj;
+        const imgs = {}; IMG_KEYS.forEach(k=>imgs[k]=state.club[k]);
+        const n = normalize({club:{...s.club, ...imgs}, back:s.back});
+        state.club = n.club; state.back = n.back;
+        touched = true;
+      } else if(id.startsWith("img_")){
+        const k = id.slice(4);
+        if(!IMG_KEYS.includes(k)) return;
+        const v = d.v ?? null, vj = stable(v);
+        if(vj === synced.img[k]) return;
+        synced.img[k] = vj; state.club[k] = v;
+        touched = true;
+      }
+    });
+    if(touched && ready){ hydrate(); renderAll(); }
+  }
+
+  /* 로그인 후: 서버 기준 첫 스냅숏 두 개가 모두 와야 편집을 연다.
+     캐시만 보고 열면 빈 화면이 서버의 명단을 덮어쓸 수 있다. */
+  function startSync(user){
+    unsubs.forEach(u=>u()); unsubs=[];
+    ready = false; resetSynced();
+    state = structuredClone(DEFAULT);
+    let mOK=false, sOK=false, cacheHasData=false, offTimer=null;
+    const gateMsg = $("#gateMsg");
+    const tryReady = async (offline)=>{
+      if(ready || !(offline || (mOK && sOK))) return;
+      ready = true;
+      clearTimeout(offTimer);
+      renderTable();
+      const f = state.members.findIndex(hasContent);
+      cursor = f>=0 ? f : 0;
+      hydrate(); renderAll();
+      document.body.classList.add("authed");
+      $("#whoami").textContent = emailToId(user.email);
+      if(offline) setSaved("오프라인 · 연결되면 저장됩니다", false);
+      flushNow();                                   // 새 프로젝트면 기본 서식을 올린다
+      await offerLegacyUpload();
+    };
+    offTimer = setTimeout(()=>{
+      if(ready) return;
+      if(cacheHasData) tryReady(true);
+      else gateMsg.textContent = "서버에 연결하지 못했습니다. 인터넷 연결을 확인하세요.";
+    }, 8000);
+    const onErr = err=>{
+      console.error("[cloud] listen failed", err);
+      clearTimeout(offTimer);
+      const msg = err.code==="permission-denied"
+        ? "데이터를 읽을 권한이 없습니다. Firestore 보안 규칙을 확인하세요."
+        : "데이터를 불러오지 못했습니다 ("+(err.code||err.message)+")";
+      if(ready) setSaved(msg, false);
+      else { showGate(msg, false); }
+    };
+    unsubs.push(onSnapshot(collection(fs,"members"), {includeMetadataChanges:true}, snap=>{
+      if(!snap.empty) cacheHasData = true;
+      onMembersSnap(snap);
+      if(!snap.metadata.fromCache){ mOK = true; tryReady(false); }
+    }, onErr));
+    unsubs.push(onSnapshot(collection(fs,"idcard"), {includeMetadataChanges:true}, snap=>{
+      if(!snap.empty) cacheHasData = true;
+      onSettingsSnap(snap);
+      if(!snap.metadata.fromCache){ sOK = true; tryReady(false); }
+    }, onErr));
+  }
+
+  async function offerLegacyUpload(){
+    if(filled().length) return;
+    const legacy = await loadLegacy();
+    const n = legacy ? legacy.members.filter(hasContent).length : 0;
+    if(!n) return;
+    if(!confirm(`이 브라우저에 예전에 저장해 둔 회원 ${n}명과 조기회 정보가 있습니다.\n클라우드로 올릴까요?`)) return;
+    state = legacy;
+    keepFocus(renderTable);
+    hydrate(); renderAll();
+    structural = true; flushNow();
+    await clearLegacy();
+    setSaved(`예전 명단 ${n}명을 올렸습니다`, true);
+  }
+
+  /* ── 로그인 ── 아이디는 Firebase 이메일 계정의 앞부분이다 */
+  const ID_RE = /^[a-z0-9._-]{2,40}$/;
+  const idToEmail = id => `${id.trim().toLowerCase()}@${LOGIN_DOMAIN}`;
+  const emailToId = e => String(e||"").replace("@"+LOGIN_DOMAIN, "");
+  function showGate(msg, busy, info){
+    const g=$("#gate"), m=$("#gateMsg");
+    document.body.classList.remove("authed");
+    g.classList.toggle("busy", !!busy);
+    m.textContent = msg||"";
+    m.classList.toggle("info", !!info);
+    $("#lgBtn").disabled = false;
+  }
+  const AUTH_MSG = {
+    "auth/invalid-credential":"아이디 또는 비밀번호가 맞지 않습니다.",
+    "auth/invalid-login-credentials":"아이디 또는 비밀번호가 맞지 않습니다.",
+    "auth/user-not-found":"아이디 또는 비밀번호가 맞지 않습니다.",
+    "auth/wrong-password":"아이디 또는 비밀번호가 맞지 않습니다.",
+    "auth/invalid-email":"아이디는 영문 소문자·숫자·. _ - 만 쓸 수 있습니다.",
+    "auth/user-disabled":"사용이 중지된 계정입니다.",
+    "auth/too-many-requests":"여러 번 틀려서 잠시 막혔습니다. 잠시 뒤 다시 시도하세요.",
+    "auth/network-request-failed":"인터넷 연결을 확인하세요.",
+    "auth/operation-not-allowed":"Firebase 콘솔에서 이메일/비밀번호 로그인을 켜 주세요.",
+    "auth/invalid-api-key":"firebase-config.js 의 apiKey 가 올바르지 않습니다.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"firebase-config.js 의 apiKey 가 올바르지 않습니다."
+  };
+
+  async function logout(){
+    if(!confirm("로그아웃할까요? 이 브라우저에 남은 임시 사본도 지웁니다.")) return;
+    flushNow();
+    setSaved("저장 마무리 중…", null);
+    try{ await Promise.race([waitForPendingWrites(fs), new Promise(r=>setTimeout(r,5000))]); }catch(e){}
+    unsubs.forEach(u=>u()); unsubs=[];
+    await signOut(auth).catch(()=>{});
+    try{ await terminate(fs); await clearIndexedDbPersistence(fs); }catch(e){}
+    location.reload();
   }
 
   /* ── 백업 · 복원 ─────────────────────────────────────────── */
@@ -1022,7 +1399,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     const payload = {
       app:"soccer-idcard", v:1, savedAt:new Date().toISOString(),
       club:state.club, back:state.back,
-      members:state.members.map(({id,...m})=>m)
+      members:filled()
     };
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:"application/json"}));
     const a = document.createElement("a");
@@ -1047,7 +1424,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       renderTable();
       const f = state.members.findIndex(hasContent);
       cursor = f >= 0 ? f : 0;
-      hydrate(); renderAll(); save();
+      hydrate(); renderAll(); save({structure:true});
       setSaved(`백업을 불러왔습니다 · ${n}명`, true);
     };
     fr.onerror = ()=>setSaved("백업 파일을 읽지 못했습니다", false);
@@ -1345,7 +1722,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
      내용이 있는 줄만 센다. */
   const COLS = ["name","no","birth","team"];
   const BLANK_ROWS = 5;
-  const newMember = ()=>({id:++uid,name:"",no:"",birth:"",team:"",photo:null});
+  const newMember = ()=>({key:newKey(),name:"",no:"",birth:"",team:"",photo:null});
   const hasContent = m => !!(m && (m.name||m.no||m.birth||m.team||m.photo));
   const filled = ()=>state.members.filter(hasContent);
 
@@ -1537,7 +1914,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
       $("#count").innerHTML = `<b>${filled().length}</b>명 · A4 ${Math.ceil(filled().length/10)||0}장`;
       renderStyles();
     }
-    renderPreview(); renderSheetsSoon(); save();
+    renderPreview(); renderSheetsSoon(); save({key:state.members[r].key});
   });
 
   // 엑셀 셀 범위 붙여넣기
@@ -1550,7 +1927,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     const res=applyGridPaste(text, r0, c0);
     if(!res) return;
     cursor=r0;
-    renderTable(); renderAll(); save();
+    renderTable(); renderAll(); save({structure:true});
     focusCell(res.row, COLS[c0], true);
     setSaved(`${res.added}줄을 붙여넣었습니다`, true);
   });
@@ -1577,7 +1954,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     if(del){
       state.members.splice(+del.dataset.del,1);
       cursor=Math.max(0,Math.min(cursor,state.members.length-1));
-      renderTable(); renderAll(); save(); return;
+      renderTable(); renderAll(); save({structure:true}); return;
     }
     const th=e.target.closest("[data-photo]");
     if(th){ photoTarget=+th.dataset.photo; $("#filePhoto").value=""; $("#filePhoto").click(); return; }
@@ -1592,7 +1969,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     const f=e.target.files[0]; if(!f||photoTarget<0) return;
     shrinkCover(f,264,348,url=>{
       if(!url) return;
-      state.members[photoTarget].photo=url; renderTable(); renderAll(); save();
+      state.members[photoTarget].photo=url; renderTable(); renderAll(); save({key:state.members[photoTarget].key});
     });
   });
   const SLOTS = {
@@ -1640,7 +2017,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
     const n=filled().length;
     if(!n) return;
     if(!confirm(`회원 ${n}명을 모두 지웁니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
-    state.members=[]; cursor=0; renderTable(); renderAll(); save();
+    state.members=[]; cursor=0; renderTable(); renderAll(); save({structure:true});
   });
   $("#btnExport").addEventListener("click", exportBackup);
   $("#btnImport").addEventListener("click",()=>{ $("#fileBackup").value=""; $("#fileBackup").click(); });
@@ -1650,7 +2027,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   $("#btnSample").addEventListener("click",()=>{
     state.members=[]; 
     applyGridPaste("이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t동남FC\n김민수\t7\t1982.03.21\t동남FC\n박정훈\t10\t790506\t동남FC", 0, 0);
-    cursor=0; renderTable(); renderAll(); save();
+    cursor=0; renderTable(); renderAll(); save({structure:true});
   });
 
   function stepMember(d){
@@ -1674,22 +2051,52 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
 
   /* ── 시작 ──────────────────────────────── */
   function hydrate(){
-    $$("[data-club]").forEach(el=>{ if(el.type!=="color") el.value = state.club[el.dataset.club] ?? ""; });
+    const active = document.activeElement;   // 다른 관리자 변경이 들어와도 입력 중인 칸은 건드리지 않는다
+    $$("[data-club]").forEach(el=>{ if(el.type!=="color" && el!==active) el.value = state.club[el.dataset.club] ?? ""; });
     $("#fBand").value = state.club.band;
-    $("#fBack").value = state.back.join("\n");
+    if($("#fBack")!==active) $("#fBack").value = state.back.join("\n");
     syncSlots();
     syncSwatches();
   }
   document.body.classList.add("cutlines");
   hydrate(); renderTable(); renderAll();
-  loadState().then(st=>{
-    state = st;
-    renderTable();                       // 빈 꼬리줄을 먼저 채워 넣고
-    const f = state.members.findIndex(hasContent);
-    cursor = f >= 0 ? f : 0;
-    hydrate(); renderAll();
-    if(!useIDB) setSaved("임시 저장소로 동작 중 · 백업을 권합니다", false);
-  }).catch(()=>setSaved("저장된 내용을 불러오지 못했습니다", false));
+
+  $("#btnLogout").addEventListener("click", logout);
+  window.addEventListener("pagehide", ()=>flushNow());
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") flushNow(); });
+
+  $("#loginForm").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const id = $("#lgId").value.trim().toLowerCase(), pw = $("#lgPw").value;
+    if(!ID_RE.test(id)){ showGate(AUTH_MSG["auth/invalid-email"], false); $("#lgId").focus(); return; }
+    $("#lgBtn").disabled = true;
+    showGate("로그인 중…", false, true);
+    $("#lgBtn").disabled = true;
+    try{
+      await signInWithEmailAndPassword(auth, idToEmail(id), pw);
+      $("#lgPw").value = "";
+    }catch(err){
+      console.error("[auth]", err);
+      showGate(AUTH_MSG[err.code] || ("로그인하지 못했습니다 ("+(err.code||err.message)+")"), false);
+      $("#lgPw").select();
+    }
+  });
+
+  if(!CONFIGURED){
+    showGate("Firebase 설정이 비어 있습니다. firebase-config.js 에 프로젝트 설정값을 넣어 주세요.", true);
+  } else {
+    onAuthStateChanged(auth, user=>{
+      if(user){
+        showGate("명단을 불러오는 중…", true, true);
+        startSync(user);
+      } else {
+        unsubs.forEach(u=>u()); unsubs=[];
+        ready = false;
+        showGate("", false);
+        $("#lgId").focus();
+      }
+    });
+  }
 })();
 </script>
 </body>

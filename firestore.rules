@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// 로그인한 관리자만 읽고 쓴다.
+// 반드시 Authentication → 설정 → 사용자 작업에서 "생성(가입) 사용"을 꺼서
+// 콘솔에서 만든 계정 말고는 아무도 가입할 수 없게 해 두세요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null
+        && request.auth.token.email.matches('.*@soccer-idcard[.]example$');
+    }
+
+    match /members/{memberId} {
+      allow read, delete: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 100
+        && (request.resource.data.photo == null
+            || (request.resource.data.photo is string && request.resource.data.photo.size() < 700000));
+    }
+
+    match /idcard/{docId} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && docId in ['settings', 'img_logo', 'img_issuerLogo', 'img_sealImg'];
+    }
+  }
+}
