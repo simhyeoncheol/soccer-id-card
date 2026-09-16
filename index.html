@@ -1475,12 +1475,13 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   }
   const COL_A = i => String.fromCharCode(65+i);
   const EMU_PX = 9525;                    // 1px (96dpi) = 9525 EMU
-  const PHOTO_PX = 52;                    // 엑셀에 넣는 증명사진 높이
+  const PHOTO_PX = 96;                    // 엑셀에 넣는 증명사진 높이 — 칸을 꽉 채운다
+  const PHOTO_PAD = 4;                    // 사진과 칸 사이 여백(px)
 
   function sheetXML(rows, widths, heights, hasDrawing){
     const body = rows.map((cells,r)=>
       `<row r="${r+1}"${heights[r]?` ht="${heights[r]}" customHeight="1"`:""}>` + cells.map((v,c)=>
-        `<c r="${COL_A(c)}${r+1}" t="inlineStr"${r===0?' s="1"':''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`
+        `<c r="${COL_A(c)}${r+1}" t="inlineStr" s="${r===0?1:2}"><is><t xml:space="preserve">${esc(v)}</t></is></c>`
       ).join("") + `</row>`).join("");
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
       + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"`
@@ -1498,8 +1499,8 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
     const body = pics.map((p,i)=>
       `<xdr:oneCellAnchor>`
-      + `<xdr:from><xdr:col>${p.col}</xdr:col><xdr:colOff>${2*EMU_PX}</xdr:colOff>`
-      + `<xdr:row>${p.row}</xdr:row><xdr:rowOff>${2*EMU_PX}</xdr:rowOff></xdr:from>`
+      + `<xdr:from><xdr:col>${p.col}</xdr:col><xdr:colOff>${PHOTO_PAD*EMU_PX}</xdr:colOff>`
+      + `<xdr:row>${p.row}</xdr:row><xdr:rowOff>${PHOTO_PAD*EMU_PX}</xdr:rowOff></xdr:from>`
       + `<xdr:ext cx="${Math.round(p.w*EMU_PX)}" cy="${Math.round(p.h*EMU_PX)}"/>`
       + `<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i+2}" name="${esc(p.name)}"/><xdr:cNvPicPr/></xdr:nvPicPr>`
       + `<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId${i+1}"/>`
@@ -1544,9 +1545,14 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
       const h = PHOTO_PX, w = Math.round(PHOTO_PX * dim.w / dim.h);
       media.push({ext:raw.ext, bytes:raw.bytes});
       pics.push({col:0, row:i+1, w, h, name:(ms[i].name||"사진")+" 증명사진"});
-      heights[i+1] = Math.round((h + 5) * 0.75);        // px → pt
+      heights[i+1] = Math.round((h + PHOTO_PAD*2) * 0.75);        // px → pt
     }
+    heights[0] = 26;                                             // 머리글 줄
     const photoW = pics.length ? Math.max(...pics.map(p=>p.w)) : 40;
+    // 머리글 색은 카드 테마 색, 글자는 배경 명도에 따라 흰색/검은색
+    const bandRGB = toRGB(state.club.band);
+    const headBg = bandRGB.map(v=>v.toString(16).padStart(2,"0")).join("").toUpperCase();
+    const headInk = (bandRGB[0]*299 + bandRGB[1]*587 + bandRGB[2]*114)/1000 > 150 ? "1F2937" : "FFFFFF";
     const X = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     const files = [
       {name:"[Content_Types].xml", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
@@ -1572,15 +1578,20 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
       {name:"xl/styles.xml", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
         + `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
         + `<fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font>`
-        + `<font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts>`
-        + `<fills count="1"><fill><patternFill patternType="none"/></fill></fills>`
+        + `<font><b/><sz val="11"/><color rgb="FF${headInk}"/><name val="맑은 고딕"/></font></fonts>`
+        + `<fills count="3"><fill><patternFill patternType="none"/></fill>`
+        + `<fill><patternFill patternType="gray125"/></fill>`
+        + `<fill><patternFill patternType="solid"><fgColor rgb="FF${headBg}"/><bgColor indexed="64"/></patternFill></fill></fills>`
         + `<borders count="1"><border/></borders>`
         + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
-        + `<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
-        + `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>`
+        + `<cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
+        + `<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1">`
+        + `<alignment horizontal="center" vertical="center"/></xf>`
+        + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1">`
+        + `<alignment horizontal="center" vertical="center"/></xf></cellXfs>`
         + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>`
         + `</styleSheet>`},
-      {name:"xl/worksheets/sheet1.xml", data:sheetXML(rows, [Math.ceil((photoW+8)/7), 12, 9, 13, 16, 24], heights, !!pics.length)}
+      {name:"xl/worksheets/sheet1.xml", data:sheetXML(rows, [Math.max(5,(photoW+PHOTO_PAD*2-5)/7).toFixed(2), 12, 9, 13, 16, 24], heights, !!pics.length)}
     ];
     if(pics.length){
       files.push(
