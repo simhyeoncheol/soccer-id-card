@@ -1452,7 +1452,9 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     const u16 = n=>[n&255,(n>>8)&255], u32 = n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>>24)&255];
     let off = 0;
     files.forEach(f=>{
-      const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      const name = enc.encode(f.name);
+      const data = (typeof f.data === "string") ? enc.encode(f.data) : f.data;   // 사진은 바이트 그대로
+      const crc = crc32(data);
       const head = [...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
                     ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0)];
       parts.push(new Uint8Array(head), name, data);
@@ -1472,25 +1474,79 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     return new Blob(parts, {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
   }
   const COL_A = i => String.fromCharCode(65+i);
-  function sheetXML(rows, widths){
+  const EMU_PX = 9525;                    // 1px (96dpi) = 9525 EMU
+  const PHOTO_PX = 52;                    // 엑셀에 넣는 증명사진 높이
+
+  function sheetXML(rows, widths, heights, hasDrawing){
     const body = rows.map((cells,r)=>
-      `<row r="${r+1}">` + cells.map((v,c)=>
+      `<row r="${r+1}"${heights[r]?` ht="${heights[r]}" customHeight="1"`:""}>` + cells.map((v,c)=>
         `<c r="${COL_A(c)}${r+1}" t="inlineStr"${r===0?' s="1"':''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`
       ).join("") + `</row>`).join("");
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
-      + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+      + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"`
+      + ` xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
       + `<sheetViews><sheetView workbookViewId="0">`
       + `<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
       + `<cols>` + widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("") + `</cols>`
-      + `<sheetData>${body}</sheetData></worksheet>`;
+      + `<sheetData>${body}</sheetData>`
+      + (hasDrawing ? `<drawing r:id="rId1"/>` : "") + `</worksheet>`;
   }
-  function exportExcel(){
+
+  /* 사진은 칸에 들어가는 값이 아니라 시트 위에 떠 있는 그림이다.
+     칸 왼쪽 위에 앵커를 걸고(oneCellAnchor) 줄 높이를 사진에 맞춘다. */
+  function drawingXML(pics){
+    const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+    const body = pics.map((p,i)=>
+      `<xdr:oneCellAnchor>`
+      + `<xdr:from><xdr:col>${p.col}</xdr:col><xdr:colOff>${2*EMU_PX}</xdr:colOff>`
+      + `<xdr:row>${p.row}</xdr:row><xdr:rowOff>${2*EMU_PX}</xdr:rowOff></xdr:from>`
+      + `<xdr:ext cx="${Math.round(p.w*EMU_PX)}" cy="${Math.round(p.h*EMU_PX)}"/>`
+      + `<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i+2}" name="${esc(p.name)}"/><xdr:cNvPicPr/></xdr:nvPicPr>`
+      + `<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId${i+1}"/>`
+      + `<a:stretch><a:fillRect/></a:stretch></xdr:blipFill>`
+      + `<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${Math.round(p.w*EMU_PX)}" cy="${Math.round(p.h*EMU_PX)}"/></a:xfrm>`
+      + `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>`
+      + `<xdr:clientData/></xdr:oneCellAnchor>`).join("");
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+      + `<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="${A}">`
+      + body + `</xdr:wsDr>`;
+  }
+
+  function dataURLBytes(url){
+    const m = /^data:([^;,]+)[^,]*,(.*)$/s.exec(String(url||""));
+    if(!m) return null;
+    const bin = atob(m[2]), out = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+    return {bytes:out, ext: /png/i.test(m[1]) ? "png" : "jpeg"};
+  }
+  const imgSize = url => new Promise(res=>{
+    const im = new Image();
+    im.onload = ()=>res({w:im.naturalWidth, h:im.naturalHeight});
+    im.onerror = ()=>res(null);
+    im.src = url;
+  });
+  async function exportExcel(){
     const ms = filled();
     if(!ms.length){ setSaved("내보낼 회원이 없습니다", false); return; }
-    const rows = [["이름","등번호","생년월일","소속팀","회원번호","사진"]];
+    setSaved("엑셀 파일 만드는 중…", null);
+    const rows = [["사진","이름","등번호","생년월일","소속팀","회원번호"]];
     ms.forEach(m=>rows.push([
-      m.name, m.no, normBirth(m.birth).disp, m.team, memberNo(m), m.photo ? "있음" : ""
+      "", m.name, m.no, normBirth(m.birth).disp, m.team, memberNo(m)
     ]));
+
+    // 사진을 xl/media 에 담고, 줄 높이를 사진에 맞춰 키운다
+    const media = [], pics = [], heights = [];
+    for(let i=0;i<ms.length;i++){
+      const raw = dataURLBytes(ms[i].photo);
+      if(!raw) continue;
+      const dim = await imgSize(ms[i].photo);
+      if(!dim || !dim.w || !dim.h) continue;
+      const h = PHOTO_PX, w = Math.round(PHOTO_PX * dim.w / dim.h);
+      media.push({ext:raw.ext, bytes:raw.bytes});
+      pics.push({col:0, row:i+1, w, h, name:(ms[i].name||"사진")+" 증명사진"});
+      heights[i+1] = Math.round((h + 5) * 0.75);        // px → pt
+    }
+    const photoW = pics.length ? Math.max(...pics.map(p=>p.w)) : 40;
     const X = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     const files = [
       {name:"[Content_Types].xml", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
@@ -1500,6 +1556,8 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
         + `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>`
         + `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>`
         + `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
+        + (pics.length ? `<Default Extension="jpeg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/>`
+            + `<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>` : "")
         + `</Types>`},
       {name:"_rels/.rels", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
         + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
@@ -1522,15 +1580,28 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
         + `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>`
         + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>`
         + `</styleSheet>`},
-      {name:"xl/worksheets/sheet1.xml", data:sheetXML(rows, [12,9,13,16,24,7])}
+      {name:"xl/worksheets/sheet1.xml", data:sheetXML(rows, [Math.ceil((photoW+8)/7), 12, 9, 13, 16, 24], heights, !!pics.length)}
     ];
+    if(pics.length){
+      files.push(
+        {name:"xl/drawings/drawing1.xml", data:drawingXML(pics)},
+        {name:"xl/worksheets/_rels/sheet1.xml.rels", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+          + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+          + `<Relationship Id="rId1" Type="${X}/drawing" Target="../drawings/drawing1.xml"/></Relationships>`},
+        {name:"xl/drawings/_rels/drawing1.xml.rels", data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+          + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+          + media.map((m,i)=>`<Relationship Id="rId${i+1}" Type="${X}/image" Target="../media/image${i+1}.${m.ext}"/>`).join("")
+          + `</Relationships>`}
+      );
+      media.forEach((m,i)=>files.push({name:`xl/media/image${i+1}.${m.ext}`, data:m.bytes}));
+    }
     const url = URL.createObjectURL(zipStore(files));
     const a = document.createElement("a");
     a.href = url;
     a.download = `${(state.club.name||"회원증").replace(/[\\/:*?"<>|\s]/g,"_")}_회원명단_${stamp()}.xlsx`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url), 10000);
-    setSaved(`엑셀 파일을 내려받았습니다 · ${ms.length}명`, true);
+    setSaved(`엑셀 파일을 내려받았습니다 · ${ms.length}명${pics.length?` · 사진 ${pics.length}장`:""}`, true);
   }
 
   /* ── 값 다듬기 ─────────────────────────── */
