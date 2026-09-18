@@ -186,13 +186,17 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 .field .note{font-size:11.5px;color:var(--ink-3);line-height:1.5;word-break:keep-all}
 .field .note b{color:var(--ink-2);font-weight:600}
-input[type=text],textarea{
+input[type=text],input[type=number],select,textarea{
   width:100%;padding:9px 12px;
   background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
   transition:border-color .14s, background .14s, box-shadow .14s;
 }
-input[type=text]:hover,textarea:hover{border-color:var(--ink-3)}
-input[type=text]:focus,textarea:focus{
+select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:30px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 51%, calc(100% - 10px) 51%;
+  background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
+input[type=text]:hover,input[type=number]:hover,select:hover,textarea:hover{border-color:var(--ink-3)}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{
   background:var(--surface);border-color:var(--accent);outline:none;
   box-shadow:0 0 0 3px var(--accent-soft);
 }
@@ -655,7 +659,7 @@ table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:780px;
    ═════════════════════════════════════════════ */
 .sheets{display:none}
 body.showsheets .sheets{display:flex;flex-direction:column;align-items:center;gap:20px;padding:0 26px 44px;overflow-x:auto}
-.sheetslot{overflow:hidden}
+.sheetslot{position:relative;overflow:hidden}
 .sheetbox{width:210mm;transform:scale(var(--sheetscale));transform-origin:top left;box-shadow:var(--shadow-lg)}
 .sheet{
   width:210mm;height:297mm;background:#fff;padding:8.7mm 17mm;
@@ -665,6 +669,19 @@ body.showsheets .sheets{display:flex;flex-direction:column;align-items:center;ga
 }
 .slot{position:relative;width:86mm;height:54mm}
 body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
+
+/* 양면인쇄 보정 — 뒷면 장만 돌리고 움직인다.
+   단변 묶기(짧은 쪽으로 넘기는 프린터)는 뒷면이 180° 돌아 찍히므로
+   미리 180° 돌려 두어야 앞뒤가 맞는다. 회전을 먼저, 이동을 나중에 적으면
+   두 방식 모두 "뒷면을 봤을 때 오른쪽(+)·아래(+)"로 움직인다. */
+.sheet.bk{transform:rotate(var(--bkrot,0deg)) translate(var(--bkdx,0mm), var(--bkdy,0mm))}
+.sheetcap{
+  position:absolute;left:12px;top:10px;z-index:2;
+  padding:3px 9px;border-radius:999px;
+  background:var(--bar);color:var(--bar-ink);
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;white-space:nowrap;
+  box-shadow:0 1px 4px rgba(0,0,0,.35);
+}
 
 @media print{
   @page{size:A4;margin:0}
@@ -676,6 +693,7 @@ body.cutlines .slot{outline:.2mm dashed #b8bec5;outline-offset:0}
   .sheet{page-break-after:always;break-after:page}
   .sheet:last-child{page-break-after:auto;break-after:auto}
   .punch{display:none}
+  .sheetcap{display:none !important}
 }
 /* ═════════════════════════════════════════════
    로그인 · 클라우드 저장
@@ -899,9 +917,30 @@ body.authed .gate{display:none}
             <div><dt>인쇄 배율</dt><dd>100%</dd></div>
             <div><dt>권장 용지</dt><dd>120g↑</dd></div>
           </div>
+          <div class="field">
+            <label for="fDuplex">양면인쇄 방식</label>
+            <select id="fDuplex">
+              <option value="long">장변 묶기 — 긴 쪽으로 넘김 (프린터 기본값)</option>
+              <option value="short">단변 묶기 — 짧은 쪽으로 넘김</option>
+            </select>
+            <span class="note">앞뒤가 <b>위아래로 뒤집혀</b> 나오면 반대쪽을 고르세요. 인쇄 창의 <b>양면</b> 설정과 똑같이 맞추면 됩니다.</span>
+          </div>
+          <div class="field">
+            <div class="row2">
+              <div class="field" style="margin-bottom:0">
+                <label for="fBkDx">뒷면 좌우 보정 (mm)</label>
+                <input type="number" id="fBkDx" step="0.5" min="-10" max="10" value="0">
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label for="fBkDy">뒷면 위아래 보정 (mm)</label>
+                <input type="number" id="fBkDy" step="0.5" min="-10" max="10" value="0">
+              </div>
+            </div>
+            <span class="note">뒷면을 펼쳐 본 상태에서 <b>+는 오른쪽·아래</b>로 옮깁니다. 프린터마다 양면 인쇄 위치가 1~2mm 어긋나는데, 시험 인쇄한 종이를 빛에 비춰 보고 밀린 만큼 넣으면 딱 맞습니다. 이 값은 이 컴퓨터에만 저장됩니다.</span>
+          </div>
           <ol>
-            <li><b>앞면을 인쇄합니다.</b> 인쇄 창에서 배율 <b>100%(실제 크기)</b>, 여백 <b>없음</b>, <b>배경 그래픽</b> 켜기 — 이 셋 중 하나라도 틀리면 카드 크기가 달라집니다.</li>
-            <li><b>같은 종이를 뒤집어 뒷면을 인쇄합니다.</b> 뒷면 페이지는 좌우가 미리 뒤집혀 있어 그대로 넣으면 앞뒤가 맞습니다. 먼저 한 장만 시험 인쇄해 보세요.</li>
+            <li><b>인쇄 설정을 맞춥니다.</b> 인쇄 창에서 배율 <b>100%(실제 크기)</b>, 여백 <b>없음</b>, <b>배경 그래픽</b> 켜기 — 이 셋 중 하나라도 틀리면 카드 크기가 달라져 앞뒤가 어긋납니다.</li>
+            <li><b>양면(자동 양면)으로 인쇄합니다.</b> 앞면·뒷면 페이지가 번갈아 나오도록 짜여 있어 그대로 양면으로 걸면 앞뒤가 맞습니다. 손으로 뒤집어 넣는다면 <b>앞면만</b> 먼저 인쇄한 뒤 같은 종이를 뒤집어 뒷면을 인쇄하세요. 어느 쪽이든 <b>한 장만 먼저 시험 인쇄</b>해 보세요.</li>
             <li><b>재단선대로 자릅니다.</b> 커터칼과 철자를 쓰면 가장 깔끔하고, 모서리는 5mm 라운드 펀치로 다듬으면 완성도가 확 올라갑니다.</li>
             <li><b>카드용 라미네이팅 파우치(60 × 90 mm)에 코팅합니다.</b> 카드보다 파우치가 커야 가장자리가 밀봉됩니다. 남는 투명 테두리는 2~3mm 남기고 자릅니다.</li>
             <li><b>목걸이 구멍을 뚫습니다.</b> 미리보기의 붉은 점선 자리(코팅 테두리 안쪽)에 펀치로 뚫고 고리를 끼우면 완성입니다.</li>
@@ -956,6 +995,25 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   const $  = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const KEY = "oullim-idcard-v1";
+
+  /* ── 양면인쇄 설정 ─────────────────────────
+     프린터마다 다른 값이라 클라우드로 보내지 않고 이 컴퓨터에만 둔다. */
+  const PKEY = "oullim-print-v1";
+  const printOpt = {mode:"long", dx:0, dy:0};
+  const clampMm = v => Math.max(-10, Math.min(10, Math.round((Number(v)||0)*2)/2));
+  function loadPrintOpt(){
+    let v=null; try{ v = JSON.parse(localStorage.getItem(PKEY)||"null"); }catch(e){}
+    if(!v || typeof v!=="object") return;
+    if(v.mode==="short"||v.mode==="long") printOpt.mode=v.mode;
+    printOpt.dx = clampMm(v.dx); printOpt.dy = clampMm(v.dy);
+  }
+  function savePrintOpt(){ try{ localStorage.setItem(PKEY, JSON.stringify(printOpt)); }catch(e){} }
+  function applyPrintOpt(){
+    const st = document.body.style;
+    st.setProperty("--bkrot", printOpt.mode==="short" ? "180deg" : "0deg");
+    st.setProperty("--bkdx", printOpt.dx+"mm");
+    st.setProperty("--bkdy", printOpt.dy+"mm");
+  }
 
   const BANDS = ["#1b4f9c","#123f6d","#0f6b52","#8c1c2b","#2f333b","#a85a17"];
   const STYLES = [
@@ -1983,6 +2041,10 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     if(caretEnd) el.setSelectionRange(el.value.length, el.value.length);
   }
 
+  function sheetSlot(inner, cap, cls){
+    return `<div class="sheetslot"><span class="sheetcap">${cap}</span>`
+         + `<div class="sheetbox"><div class="sheet${cls}">${inner}</div></div></div>`;
+  }
   function renderSheets(){
     const per=10, cols=2, ms=filled();
     const pages = Math.max(1, Math.ceil(ms.length/per));
@@ -1996,8 +2058,8 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
         const i = r*cols+c;
         b += chunk[i] ? `<div class="slot">${backHTML()}</div>` : `<div class="slot"></div>`;
       }
-      html += `<div class="sheetslot"><div class="sheetbox"><div class="sheet">${f}</div></div></div>`
-           +  `<div class="sheetslot"><div class="sheetbox"><div class="sheet">${b}</div></div></div>`;
+      html += sheetSlot(f, `${p+1}장째 · 앞면`, "")
+           +  sheetSlot(b, `${p+1}장째 · 뒷면`, " bk");
     }
     $("#sheets").innerHTML = html;
     if(document.body.classList.contains("showsheets")) fitSheets();
@@ -2234,6 +2296,19 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   $("#btnPrint").addEventListener("click",()=>{ renderSheets(); setTimeout(()=>window.print(),60); });
   window.addEventListener("beforeprint",renderSheets);
 
+  /* ── 양면인쇄 보정 칸 ──────────────────── */
+  $("#fDuplex").addEventListener("change", e=>{
+    printOpt.mode = e.target.value==="short" ? "short" : "long";
+    applyPrintOpt(); savePrintOpt();
+  });
+  [["#fBkDx","dx"],["#fBkDy","dy"]].forEach(([sel,k])=>{
+    $(sel).addEventListener("change", e=>{
+      printOpt[k] = clampMm(e.target.value);
+      e.target.value = printOpt[k];
+      applyPrintOpt(); savePrintOpt();
+    });
+  });
+
   /* ── 시작 ──────────────────────────────── */
   function hydrate(){
     const active = document.activeElement;   // 다른 관리자 변경이 들어와도 입력 중인 칸은 건드리지 않는다
@@ -2244,6 +2319,10 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     syncSwatches();
   }
   document.body.classList.add("cutlines");
+  loadPrintOpt(); applyPrintOpt();
+  $("#fDuplex").value = printOpt.mode;
+  $("#fBkDx").value = printOpt.dx;
+  $("#fBkDy").value = printOpt.dy;
   hydrate(); renderTable(); renderAll();
 
   $("#btnLogout").addEventListener("click", logout);
