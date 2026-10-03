@@ -576,6 +576,18 @@ table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:780px;
 }
 .grid tbody tr:hover td.gut{background:var(--surface-3);color:var(--ink-2)}
 .grid tbody tr.sel td.gut{background:var(--accent);color:#fff}
+.grid th.ck,.grid td.ck{width:34px;padding:0;text-align:center}
+.grid .ck input{width:15px;height:15px;margin:0;vertical-align:middle;cursor:pointer;accent-color:var(--accent)}
+.grid tbody tr.picked td{background:color-mix(in srgb, var(--accent) 7%, var(--surface))}
+.grid tbody tr.picked td.gut{background:color-mix(in srgb, var(--accent) 16%, var(--surface-2));color:var(--accent)}
+.grid tbody tr.picked.sel td.gut{background:var(--accent);color:#fff}
+/* 번호 칸을 잡고 끌어 순서를 바꾼다 */
+.grid td.gut.grab{cursor:grab}
+.grid td.gut.grab:hover::before{content:"⠿";font-size:13px}
+.grid td.gut.grab:hover span{display:none}
+.grid tbody tr.dragging td{opacity:.4}
+.grid tbody tr.drop-before td{box-shadow:inset 0 2px 0 var(--accent)}
+.grid tbody tr.drop-after td{box-shadow:inset 0 -2px 0 var(--accent)}
 .grid td.cell{padding:0;position:relative}
 .grid td.cell input{
   width:100%;display:block;
@@ -615,6 +627,14 @@ table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:780px;
   border-radius:0 0 var(--radius) var(--radius);background:var(--surface-2);
 }
 .count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.selbar{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:10px 20px;border-top:1px solid var(--line-soft);background:var(--surface-2);
+  font-size:12.5px;color:var(--ink-2);
+}
+.selbar b{color:var(--accent);font-weight:600}
+.selbar .note{font-size:11.5px;color:var(--ink-3);margin-left:auto;word-break:keep-all}
+.btn:disabled{opacity:.45;cursor:default;pointer-events:none}
 .count b{color:var(--accent);font-weight:600}
 
 /* 인쇄 가이드 */
@@ -873,12 +893,20 @@ body.authed .gate{display:none}
         <div class="gridwrap">
           <table class="grid">
             <thead><tr>
+              <th class="ck"><input type="checkbox" id="ckAll" title="전체 선택" aria-label="전체 선택"></th>
               <th class="gut">#</th><th style="width:58px">사진</th><th>이름</th>
               <th style="width:82px">등번호</th><th style="width:126px">생년월일</th>
               <th>소속팀 / 포지션</th><th style="width:44px"></th>
             </tr></thead>
             <tbody id="tbody"></tbody>
           </table>
+        </div>
+        <div class="selbar">
+          <span id="selInfo">선택 없음 · 전체 인쇄</span>
+          <button class="btn sm" id="btnUp" disabled title="선택한 회원을 한 칸 위로 (Alt+↑)">▲ 위로</button>
+          <button class="btn sm" id="btnDown" disabled title="선택한 회원을 한 칸 아래로 (Alt+↓)">▼ 아래로</button>
+          <button class="btn sm ghost" id="btnPickNone" disabled>선택 해제</button>
+          <span class="note">체크한 회원만 인쇄됩니다. <b>#</b> 번호를 잡고 끌어서 순서를 바꿀 수 있어요.</span>
         </div>
         <div class="tbar">
           <button class="btn sm" id="btnAdd">＋ 회원 추가</button>
@@ -1968,6 +1996,45 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   const hasContent = m => !!(m && (m.name||m.no||m.birth||m.team||m.photo));
   const filled = ()=>state.members.filter(hasContent);
 
+  /* 인쇄할 회원 고르기 — 이 화면에서만 쓰는 선택이라 클라우드에 저장하지 않는다.
+     아무도 고르지 않으면 전체를 인쇄한다. */
+  const picked = new Set();
+  const pickedList = ()=>filled().filter(m=>picked.has(m.key));
+  const printList = ()=>{ const p=pickedList(); return p.length ? p : filled(); };
+
+  function updateCount(){
+    const n = filled().length, p = pickedList().length;
+    [...picked].forEach(k=>{ if(!state.members.some(m=>m.key===k)) picked.delete(k); });
+    $("#count").innerHTML = `<b>${n}</b>명 · A4 ${Math.ceil(n/10)||0}장`;
+    $("#selInfo").innerHTML = p
+      ? `<b>${p}</b>명 선택 · 인쇄 A4 ${Math.ceil(p/10)}장`
+      : `선택 없음 · 전체 인쇄`;
+    ["#btnUp","#btnDown","#btnPickNone"].forEach(id=>{ $(id).disabled = !p; });
+    const all = $("#ckAll");
+    all.checked = n>0 && p===n;
+    all.indeterminate = p>0 && p<n;
+    $("#btnPrint").textContent = p ? `선택 ${p}명 인쇄 / PDF` : "인쇄 / PDF 저장";
+  }
+
+  /* 명단 순서를 바꾼다. 빈 줄은 정리하고, 미리보기 중인 회원은 그대로 따라간다. */
+  function reorder(list){
+    keepFocus(()=>{ state.members = list; renderTable(); });
+    renderAll(); save({structure:true});
+  }
+  function movePicked(d, keys=picked){
+    const list = filled();
+    const idx = d<0 ? list.map((_,i)=>i) : list.map((_,i)=>i).reverse();
+    let moved = false;
+    idx.forEach(i=>{
+      const j = i+d;
+      if(j<0 || j>=list.length) return;
+      if(keys.has(list[i].key) && !keys.has(list[j].key)){
+        [list[i],list[j]] = [list[j],list[i]]; moved = true;
+      }
+    });
+    if(moved) reorder(list);
+  }
+
   function ensureBlankTail(){
     if(!state.members.length){
       for(let i=0;i<BLANK_ROWS;i++) state.members.push(newMember());
@@ -1980,8 +2047,9 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   function renderTable(){
     ensureBlankTail();
     $("#tbody").innerHTML = state.members.map((m,i)=>`
-      <tr data-i="${i}">
-        <td class="gut">${i+1}</td>
+      <tr data-i="${i}"${picked.has(m.key)?' class="picked"':''}>
+        <td class="ck"><input type="checkbox" data-ck="${i}"${picked.has(m.key)?" checked":""} tabindex="-1" aria-label="${i+1}번 인쇄 선택"></td>
+        <td class="gut${hasContent(m)?" grab":""}" title="${hasContent(m)?"끌어서 순서 바꾸기":""}"><span>${i+1}</span></td>
         <td class="pc"><div class="thumb${m.photo?" has":""}" data-photo="${i}" title="증명사진 넣기">
           ${m.photo?`<img src="${m.photo}" alt="">`:`<span>＋</span>`}</div></td>
         <td class="cell"><input type="text" value="${esc(m.name)}" data-f="name" placeholder="이름"></td>
@@ -1990,8 +2058,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
         <td class="cell"><input type="text" value="${esc(m.team)}" data-f="team" placeholder="소속팀"></td>
         <td class="del"><button data-del="${i}" tabindex="-1" title="이 줄 지우기" aria-label="${i+1}번 줄 지우기">✕</button></td>
       </tr>`).join("");
-    const n = filled().length;
-    $("#count").innerHTML = `<b>${n}</b>명 · A4 ${Math.ceil(n/10)||0}장`;
+    updateCount();
   }
 
   /* 붙여넣은 표를 셀 단위로 푼다 (엑셀=탭, CSV=따옴표 처리) */
@@ -2046,7 +2113,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
          + `<div class="sheetbox"><div class="sheet${cls}">${inner}</div></div></div>`;
   }
   function renderSheets(){
-    const per=10, cols=2, ms=filled();
+    const per=10, cols=2, ms=printList();
     const pages = Math.max(1, Math.ceil(ms.length/per));
     let html="";
     for(let p=0;p<pages;p++){
@@ -2149,6 +2216,9 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     const inp=e.target.closest("input[data-f]"); if(!inp) return;
     const r=+inp.closest("tr").dataset.i, f=inp.dataset.f;
     state.members[r][f]=inp.value;
+    const gut=inp.closest("tr").querySelector("td.gut");
+    gut.classList.toggle("grab", hasContent(state.members[r]));
+    gut.title = hasContent(state.members[r]) ? "끌어서 순서 바꾸기" : "";
     // 마지막 줄에 뭔가 적히면 빈 줄을 한 칸 더 붙인다
     if(r===state.members.length-1 && hasContent(state.members[r])){
       const caret=inp.selectionStart;
@@ -2157,7 +2227,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
       const el=document.querySelector(`#tbody tr[data-i="${r}"] input[data-f="${f}"]`);
       if(el && caret!=null) el.setSelectionRange(caret,caret);
     } else {
-      $("#count").innerHTML = `<b>${filled().length}</b>명 · A4 ${Math.ceil(filled().length/10)||0}장`;
+      updateCount();
       renderStyles();
     }
     renderPreview(); renderSheetsSoon(); save({key:state.members[r].key});
@@ -2182,6 +2252,13 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   tb.addEventListener("keydown",e=>{
     const inp=e.target.closest("input[data-f]"); if(!inp) return;
     const tr=inp.closest("tr"), r=+tr.dataset.i, c=COLS.indexOf(inp.dataset.f);
+    // Alt+↑↓ : 선택한 회원(없으면 지금 줄)을 한 칸 옮긴다
+    if(e.altKey && (e.key==="ArrowUp"||e.key==="ArrowDown")){
+      e.preventDefault();
+      if(!hasContent(state.members[r])) return;
+      movePicked(e.key==="ArrowUp"?-1:1, picked.size ? picked : new Set([state.members[r].key]));
+      return;
+    }
     const go=(dr,dc)=>{
       const nr=r+dr, nc=c+dc;
       if(nc<0||nc>=COLS.length) return;
@@ -2195,7 +2272,21 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     else if(e.key==="ArrowRight" && inp.selectionStart===inp.value.length && inp.selectionEnd===inp.value.length) go(0,1);
   });
 
+  let lastCk = -1;
   tb.addEventListener("click",e=>{
+    const ck=e.target.closest("[data-ck]");
+    if(ck){
+      const i=+ck.dataset.ck, on=ck.checked;
+      // Shift 를 누르고 고르면 앞서 고른 줄부터 여기까지 한꺼번에
+      const [a,b] = (e.shiftKey && lastCk>=0) ? [Math.min(lastCk,i), Math.max(lastCk,i)] : [i,i];
+      for(let k=a;k<=b;k++){
+        const m=state.members[k];
+        if(!m || (!hasContent(m) && k!==i)) continue;
+        on ? picked.add(m.key) : picked.delete(m.key);
+      }
+      lastCk=i;
+      renderTable(); renderSheets(); return;
+    }
     const del=e.target.closest("[data-del]");
     if(del){
       state.members.splice(+del.dataset.del,1);
@@ -2206,6 +2297,61 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     if(th){ photoTarget=+th.dataset.photo; $("#filePhoto").value=""; $("#filePhoto").click(); return; }
     const tr=e.target.closest("tr"); if(tr){ cursor=+tr.dataset.i; renderPreview(); }
   });
+  /* 번호 칸을 잡고 끌어 순서 바꾸기. 선택한 회원을 끌면 선택한 회원 전체가 함께 옮겨진다. */
+  let dragKeys = null;
+  const clearDrop = ()=>$$("#tbody tr.drop-before, #tbody tr.drop-after").forEach(t=>t.classList.remove("drop-before","drop-after"));
+  tb.addEventListener("mousedown",e=>{
+    const g=e.target.closest("td.gut.grab"); if(g) g.closest("tr").draggable=true;
+  });
+  tb.addEventListener("mouseup",e=>{ const tr=e.target.closest("tr"); if(tr) tr.draggable=false; });
+  tb.addEventListener("dragstart",e=>{
+    const tr=e.target.closest("tr");
+    if(!tr || !tr.draggable){ e.preventDefault(); return; }
+    const m=state.members[+tr.dataset.i];
+    dragKeys = (picked.has(m.key) && pickedList().length>1) ? pickedList().map(x=>x.key) : [m.key];
+    e.dataTransfer.effectAllowed="move";
+    e.dataTransfer.setData("text/plain", m.name||"");
+    $$("#tbody tr").forEach(t=>{ if(dragKeys.includes(state.members[+t.dataset.i]?.key)) t.classList.add("dragging"); });
+  });
+  tb.addEventListener("dragover",e=>{
+    if(!dragKeys) return;
+    const tr=e.target.closest("tr"); if(!tr) return;
+    e.preventDefault(); e.dataTransfer.dropEffect="move";
+    const box=tr.getBoundingClientRect(), after=e.clientY > box.top+box.height/2;
+    clearDrop(); tr.classList.add(after?"drop-after":"drop-before");
+  });
+  tb.addEventListener("drop",e=>{
+    if(!dragKeys) return;
+    const tr=e.target.closest("tr"); if(!tr) return;
+    e.preventDefault();
+    const after=tr.classList.contains("drop-after"), target=state.members[+tr.dataset.i];
+    const moving=new Set(dragKeys), all=filled();
+    endDrag();
+    const block=all.filter(m=>moving.has(m.key)), rest=all.filter(m=>!moving.has(m.key));
+    let pos;
+    if(!hasContent(target)) pos=rest.length;                 // 빈 줄에 놓으면 맨 끝으로
+    else if(moving.has(target.key)) return;                  // 제자리
+    else pos=rest.indexOf(target)+(after?1:0);
+    rest.splice(pos,0,...block);
+    if(rest.some((m,i)=>m!==all[i])) reorder(rest);
+  });
+  // 놓는 순간 표를 다시 그려 끌던 줄이 사라지므로 dragend 는 tb 까지 올라오지 않는다 — drop 에서도 정리한다
+  const endDrag = ()=>{
+    dragKeys=null; clearDrop();
+    $$("#tbody tr").forEach(t=>{ t.draggable=false; t.classList.remove("dragging"); });
+  };
+  document.addEventListener("dragend", endDrag, true);
+
+  $("#ckAll").addEventListener("change",e=>{
+    const fl=filled();
+    if(fl.length && fl.every(m=>picked.has(m.key))) picked.clear();
+    else fl.forEach(m=>picked.add(m.key));
+    lastCk=-1; renderTable(); renderSheets();
+  });
+  $("#btnPickNone").addEventListener("click",()=>{ picked.clear(); lastCk=-1; renderTable(); renderSheets(); });
+  $("#btnUp").addEventListener("click",()=>movePicked(-1));
+  $("#btnDown").addEventListener("click",()=>movePicked(1));
+
   tb.addEventListener("focusin",e=>{
     const tr=e.target.closest("tr"); if(tr && cursor!==+tr.dataset.i){ cursor=+tr.dataset.i; renderPreview(); }
   });
@@ -2263,7 +2409,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     const n=filled().length;
     if(!n) return;
     if(!confirm(`회원 ${n}명을 모두 지웁니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
-    state.members=[]; cursor=0; renderTable(); renderAll(); save({structure:true});
+    state.members=[]; picked.clear(); cursor=0; renderTable(); renderAll(); save({structure:true});
   });
   $("#btnExcel").addEventListener("click", exportExcel);
   $("#btnExport").addEventListener("click", exportBackup);
