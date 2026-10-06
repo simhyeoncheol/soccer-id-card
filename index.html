@@ -637,6 +637,38 @@ table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:780px;
 .btn:disabled{opacity:.45;cursor:default;pointer-events:none}
 .count b{color:var(--accent);font-weight:600}
 
+/* 삭제 기록 */
+.btn .badge[hidden]{display:none}
+.btn .badge{
+  display:inline-block;min-width:17px;margin-left:4px;padding:0 5px;border-radius:9px;
+  background:var(--surface-3);color:var(--ink-2);font-family:var(--mono);font-size:10.5px;line-height:17px;text-align:center;
+}
+.trashdlg{
+  width:min(860px, calc(100vw - 32px));max-height:min(78vh, 760px);padding:0;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);color:var(--ink);box-shadow:var(--shadow-lg);
+}
+.trashdlg[open]{display:flex;flex-direction:column}
+.trashdlg::backdrop{background:rgba(8,12,18,.45)}
+.trashdlg > header{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:14px 18px;border-bottom:1px solid var(--line-soft);
+}
+.trashdlg h2{margin:0;font-size:15px;font-weight:700}
+.trashdlg header .hint{font-size:12px;color:var(--ink-3)}
+.trashdlg header input{margin-left:auto;width:180px;padding:6px 10px;font-size:12.5px}
+.trashwrap{overflow:auto;flex:1 1 auto}
+.trashdlg table.grid{min-width:700px}
+.trashdlg .grid td{padding:7px 10px;font-size:13px;vertical-align:middle}
+.trashdlg .grid td.mono{font-family:var(--mono);font-size:12px}
+.trashdlg .grid td.when{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.trashdlg .grid td.who{font-size:12px;color:var(--ink-2)}
+.trashdlg .grid td.pc{width:52px;padding:4px 0}
+.trashdlg .grid td.act{width:76px;text-align:center}
+.trashdlg .thumb{cursor:default}
+.trashdlg .empty{margin:0;padding:36px 18px;text-align:center;color:var(--ink-3);font-size:13px}
+.trashdlg > footer{padding:11px 18px;border-top:1px solid var(--line-soft);font-size:11.5px;color:var(--ink-3);background:var(--surface-2);border-radius:0 0 var(--radius) var(--radius)}
+
 /* 인쇄 가이드 */
 .spec{
   display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
@@ -913,6 +945,7 @@ body.authed .gate{display:none}
           <button class="btn sm" id="btnExcel">엑셀 내보내기</button>
           <button class="btn sm" id="btnExport">백업 파일 저장</button>
           <button class="btn sm" id="btnImport">백업 불러오기</button>
+          <button class="btn sm" id="btnTrash">삭제 기록<span class="badge" id="trashN" hidden>0</span></button>
           <button class="btn sm danger" id="btnClearAll">명단 비우기</button>
           <span class="count" id="count">0명 · A4 0장</span>
         </div>
@@ -1004,6 +1037,26 @@ body.authed .gate{display:none}
 </footer>
 
 <div class="sheets" id="sheets"></div>
+
+<dialog class="trashdlg" id="trashDlg" aria-labelledby="trashTitle">
+  <header>
+    <h2 id="trashTitle">삭제 기록</h2>
+    <span class="hint" id="trashHint"></span>
+    <input type="text" id="trashQ" placeholder="이름·소속팀 검색" aria-label="삭제 기록 검색">
+    <button class="btn sm ghost" id="trashClose">닫기</button>
+  </header>
+  <div class="trashwrap">
+    <table class="grid">
+      <thead><tr>
+        <th style="width:52px">사진</th><th>이름</th><th style="width:70px">등번호</th><th style="width:100px">생년월일</th>
+        <th>소속팀</th><th style="width:130px">삭제 일시</th><th style="width:96px">삭제한 사람</th><th style="width:76px"></th>
+      </tr></thead>
+      <tbody id="trashBody"></tbody>
+    </table>
+    <p class="empty" id="trashEmpty">삭제된 회원이 없습니다.</p>
+  </div>
+  <footer>복구하면 명단 맨 끝에 다시 붙습니다. 지운 회원은 따로 지우지 않는 한 계속 남아 있습니다.</footer>
+</dialog>
 <input type="file" id="filePhoto" accept="image/*" hidden>
 <input type="file" id="fileLogo" accept="image/*" hidden>
 <input type="file" id="fileBackup" accept="application/json,.json" hidden>
@@ -1223,7 +1276,12 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     };
     const dropMember = k=>{
       if(!synced.members.has(k)) return;
-      ops.push([doc(fs,"members",k), null, 0]);
+      // 내용이 있던 회원은 문서를 지우지 않고 삭제 표시만 단다 — 삭제 기록에서 되살릴 수 있다
+      let d = null; try{ d = JSON.parse(synced.members.get(k)); }catch(e){}
+      if(d && hasContent(d)) ops.push([doc(fs,"members",k), {...d, deleted:true,
+        deletedAt:serverTimestamp(), deletedBy:emailToId(auth.currentUser?.email)||null,
+        updatedAt:serverTimestamp(), updatedBy:by}, synced.members.get(k).length]);
+      else ops.push([doc(fs,"members",k), null, 0]);
       synced.members.delete(k); synced.order.delete(k); wrote.add(k);
     };
     if(structural){
@@ -1298,19 +1356,55 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     }
   }
 
-  const memberIsNews = c => c.type==="removed"
+  /* ── 삭제 기록 ── 삭제 표시가 달린 회원 문서. 복구하면 표시를 떼고 명단 맨 끝에 붙인다. */
+  const trash = new Map();   // key → {key,name,no,birth,team,photo,deletedAt(ms),deletedBy}
+  function syncTrash(ch){
+    let touched = false;
+    ch.forEach(c=>{
+      const k = c.doc.id;
+      const d = c.type==="removed" ? null : c.doc.data({serverTimestamps:"estimate"});
+      if(!d || d.deleted!==true){ if(trash.delete(k)) touched = true; return; }
+      const ts = d.deletedAt && d.deletedAt.toMillis ? d.deletedAt.toMillis() : 0;
+      trash.set(k, {key:k, name:String(d.name||""), no:String(d.no||""), birth:String(d.birth||""),
+        team:String(d.team||""), photo:(typeof d.photo==="string" && d.photo.startsWith("data:image/")) ? d.photo : null,
+        deletedAt:ts, deletedBy:String(d.deletedBy||"")});
+      touched = true;
+    });
+    return touched;
+  }
+  function restoreMember(k){
+    const t = trash.get(k);
+    if(!t || !ready || !fs) return;
+    flushNow();                                     // 화면에서 고치던 순서를 먼저 확정
+    let maxOrder = -1;
+    synced.order.forEach(o=>{ if(o>maxOrder) maxOrder=o; });
+    const b = writeBatch(fs);
+    // set 은 문서를 통째로 덮으므로 삭제 표시(deleted·deletedAt·deletedBy)도 함께 떨어진다
+    b.set(doc(fs,"members",k), {...memberData(t, maxOrder+1), updatedAt:serverTimestamp(),
+      updatedBy:auth.currentUser ? auth.currentUser.uid : null});
+    setSaved("복구 중…", null);
+    b.commit().then(()=>setSaved(`${t.name||"회원"} 님을 복구했습니다`, true)).catch(err=>{
+      console.error("[cloud] restore failed", err);
+      setSaved(err.code==="permission-denied" ? "저장 권한 없음 — 다시 로그인하세요" : "복구하지 못했습니다", false);
+    });
+  }
+
+  // 삭제 표시가 달린 문서는 명단에서는 지워진 것으로, 삭제 기록에는 들어간 것으로 본다
+  const isGone = c => c.type==="removed" || c.doc.data().deleted===true;
+  const memberIsNews = c => isGone(c)
     ? synced.members.has(c.doc.id)
     : stable(memberData(c.doc.data(), Number(c.doc.data().order)||0)) !== synced.members.get(c.doc.id);
 
   function onMembersSnap(snap){
     const ch = snap.docChanges();
+    if(syncTrash(ch)) renderTrash();
     if(!ch.some(memberIsNews)) return;              // 전부 내 쓰기의 메아리
     const wrote = ready ? flushNow() : new Set();   // 로컬에서 고치던 것 먼저 확정
     let touched = false;
     ch.forEach(c=>{
       const k = c.doc.id;
       if(wrote.has(k)) return;                      // 방금 내가 쓴 것이 더 새롭다
-      if(c.type==="removed"){
+      if(isGone(c)){
         if(!synced.members.has(k)) return;
         synced.members.delete(k); synced.order.delete(k);
         const i = state.members.findIndex(m=>m.key===k);
@@ -1382,7 +1476,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
      캐시만 보고 열면 빈 화면이 서버의 명단을 덮어쓸 수 있다. */
   function startSync(user){
     unsubs.forEach(u=>u()); unsubs=[];
-    ready = false; resetSynced();
+    ready = false; resetSynced(); trash.clear();
     state = structuredClone(DEFAULT);
     let mOK=false, sOK=false, cacheHasData=false, offTimer=null;
     const gateMsg = $("#gateMsg");
@@ -2056,7 +2150,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
         <td class="cell"><input type="text" class="mono" value="${esc(m.no)}" data-f="no" placeholder="－"></td>
         <td class="cell"><input type="text" class="mono" value="${esc(m.birth)}" data-f="birth" placeholder="1967-11-14"></td>
         <td class="cell"><input type="text" value="${esc(m.team)}" data-f="team" placeholder="소속팀"></td>
-        <td class="del"><button data-del="${i}" tabindex="-1" title="이 줄 지우기" aria-label="${i+1}번 줄 지우기">✕</button></td>
+        <td class="del"><button data-del="${i}" tabindex="-1" title="이 줄 지우기 (삭제 기록에서 복구 가능)" aria-label="${i+1}번 줄 지우기">✕</button></td>
       </tr>`).join("");
     updateCount();
   }
@@ -2408,7 +2502,7 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
   $("#btnClearAll").addEventListener("click",()=>{
     const n=filled().length;
     if(!n) return;
-    if(!confirm(`회원 ${n}명을 모두 지웁니다. 되돌릴 수 없습니다. 계속할까요?`)) return;
+    if(!confirm(`회원 ${n}명을 모두 지웁니다.\n지운 회원은 '삭제 기록'에서 다시 복구할 수 있습니다. 계속할까요?`)) return;
     state.members=[]; picked.clear(); cursor=0; renderTable(); renderAll(); save({structure:true});
   });
   $("#btnExcel").addEventListener("click", exportExcel);
@@ -2421,6 +2515,50 @@ import { firebaseConfig, LOGIN_DOMAIN } from "./firebase-config.js";
     state.members=[]; 
     applyGridPaste("이름\t등번호\t생년월일\t소속팀\n정경호\t14\t1967-11-14\t동남FC\n김민수\t7\t1982.03.21\t동남FC\n박정훈\t10\t790506\t동남FC", 0, 0);
     cursor=0; renderTable(); renderAll(); save({structure:true});
+  });
+
+  /* ── 삭제 기록 창 ── */
+  const two = n=>String(n).padStart(2,"0");
+  function fmtWhen(ms){
+    if(!ms) return "—";
+    const d = new Date(ms), now = new Date();
+    const day = d.getFullYear()===now.getFullYear() ? `${d.getMonth()+1}.${two(d.getDate())}`
+      : `${d.getFullYear()}.${d.getMonth()+1}.${two(d.getDate())}`;
+    return `${day} ${two(d.getHours())}:${two(d.getMinutes())}`;
+  }
+  function renderTrash(){
+    const all = [...trash.values()].sort((a,b)=>b.deletedAt-a.deletedAt);
+    $("#trashN").textContent = all.length;
+    $("#trashN").hidden = !all.length;
+    if(!$("#trashDlg").open) return;
+    const q = $("#trashQ").value.trim().toLowerCase();
+    const list = q ? all.filter(m=>(m.name+" "+m.team+" "+m.no).toLowerCase().includes(q)) : all;
+    $("#trashHint").textContent = all.length ? (q ? `${list.length} / ${all.length}명` : `${all.length}명`) : "";
+    $("#trashBody").innerHTML = list.map(m=>`
+      <tr>
+        <td class="pc"><div class="thumb${m.photo?" has":""}">${m.photo?`<img src="${m.photo}" alt="">`:""}</div></td>
+        <td>${esc(m.name)||'<span style="color:var(--ink-3)">(이름 없음)</span>'}</td>
+        <td class="mono">${esc(m.no)}</td>
+        <td class="mono">${esc(m.birth)}</td>
+        <td>${esc(m.team)}</td>
+        <td class="when">${fmtWhen(m.deletedAt)}</td>
+        <td class="who">${esc(m.deletedBy)||"—"}</td>
+        <td class="act"><button class="btn sm" data-restore="${esc(m.key)}">복구</button></td>
+      </tr>`).join("");
+    $("#trashEmpty").hidden = !!list.length;
+    $("#trashEmpty").textContent = all.length ? "검색 결과가 없습니다." : "삭제된 회원이 없습니다.";
+  }
+  $("#btnTrash").addEventListener("click",()=>{
+    $("#trashQ").value = "";
+    $("#trashDlg").showModal(); renderTrash();
+  });
+  $("#trashClose").addEventListener("click",()=>$("#trashDlg").close());
+  $("#trashDlg").addEventListener("click",e=>{ if(e.target===e.currentTarget) $("#trashDlg").close(); });
+  $("#trashQ").addEventListener("input", renderTrash);
+  $("#trashBody").addEventListener("click",e=>{
+    const b = e.target.closest("[data-restore]"); if(!b) return;
+    b.disabled = true;
+    restoreMember(b.dataset.restore);
   });
 
   function stepMember(d){
